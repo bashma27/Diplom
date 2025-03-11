@@ -6,7 +6,7 @@
 #include <math.h>
 #include "SolversSLAE.h"
 #include "GenerCalcArea.h"
-#define EPS 1e-16
+#define EPS 1e-308
 
 using namespace std;
 
@@ -53,11 +53,11 @@ vector<int> fict_nodes; // массив фиктивных узлов
 
 #pragma region Функции краевых условий, их функций и вектора правой части f
 double u_g(double x, double y, double z) { // краевое условие первого рода
-    return cos(x+y);
+    return x * y;
 }
 
 vector<double> grad_u(double x, double y) { // градиент функции u
-    return { - sin(x + y), -sin(x + y) };
+    return { y, x };
 }
 
 double lambda(int num_sub) {
@@ -83,21 +83,22 @@ double theta(int num_sub, int num, double x, double y) { // краевое ус�
 }
 
 double f(int num_sub, double x, double y) {
-    return 2 * cos(x + y) * lambda(num_sub);
+    return 0;
 }
 #pragma endregion
 
 #pragma region Создание массива конечных элементов 
 int GetNumSubarea(vector<int> end_el) { // получить номер подобласти
     for (int i = 0; i < W.size(); i++) {
-        double x1 = nodes[end_el[0]].x; double y1 = nodes[end_el[0]].y; double z1 = nodes[end_el[0]].z;  //берём индексы координат прямоугольника
-        double x2 = nodes[end_el[2]].x; double y2 = nodes[end_el[6]].y; double z2 = nodes[end_el[18]].z;
-        if ((W[i].second[0] == x1 || EPS < x1 - W[i].second[0]) &&
-            (W[i].second[1] == x2 || W[i].second[1] - x2 > EPS) &&
-            (W[i].second[2] == y1 || EPS < y1 - W[i].second[2]) &&
-            (W[i].second[3] == y2 || W[i].second[3] - y2) > EPS &&
-            (W[i].second[4] == z1 || EPS < z1 - W[i].second[4]) &&
-            (W[i].second[5] == z2 || W[i].second[5] - z2) > EPS) return W[i].first;
+        double min_x = nodes[end_el[0]].x; double min_y = nodes[end_el[0]].y; double min_z = nodes[end_el[0]].z;  //берём индексы координат прямоугольника
+        double max_x = nodes[end_el[2]].x; double max_y = nodes[end_el[6]].y; double max_z = nodes[end_el[18]].z;
+        if ( (min_x > W[i].second[0] || fabs(W[i].second[0] - min_x) < EPS) &&
+             (W[i].second[1] > max_x || fabs(max_x - W[i].second[1]) < EPS) &&
+             (min_y > W[i].second[2] || fabs(W[i].second[2] - min_y) < EPS) &&
+             (W[i].second[3] > max_y || fabs(max_y - W[i].second[3]) < EPS) &&
+             (min_z > W[i].second[4] || fabs(W[i].second[4] - min_z) < EPS) &&
+             (W[i].second[5] > max_z || fabs(max_z - W[i].second[5]) < EPS) )
+             return W[i].first;
     }
 }
 
@@ -626,7 +627,111 @@ void Test() {
     }
     cout << endl;
     cout << "Относительная норма вектора погрешности полученного решения:" << endl;
-    cout << sqrt(norm_vec_err) / sqrt(norm_vec_q_u) << endl;
+    cout << sqrt(norm_vec_err) / sqrt(norm_vec_q_u) << endl << endl;
+}
+#pragma endregion
+
+#pragma region Возврат значения функции в любой точке
+double BasicFunc(int i, double input_point, double point_1, double point_2, double point_3) {
+    double h = point_3 - point_1;
+    switch (i)
+    {
+    case 0:
+        return 2 * (input_point - point_2) * (input_point - point_3) / (h * h);
+        break;
+    case 1:
+        return -4 * (input_point - point_1) * (input_point - point_3) / (h * h);
+        break;
+    case 2:
+        return 2 * (input_point - point_1) * (input_point - point_2) / (h * h);
+        break;
+    }
+}
+
+int GetNumEndEl(Coord3 point) { // получить номер конечного элемента
+    for (int i = 0; i < array_p.size(); i++) {
+        double min_x = nodes[array_p[i].second[0]].x; double min_y = nodes[array_p[i].second[0]].y; double min_z = nodes[array_p[i].second[0]].z;  //берём значения координат параллелепипеда
+        double max_x = nodes[array_p[i].second[2]].x; double max_y = nodes[array_p[i].second[6]].y; double max_z = nodes[array_p[i].second[18]].z;
+        if ( (point.x > min_x || fabs(point.x - min_x) < EPS) &&
+             (max_x > point.x || fabs(max_x - point.x) < EPS) &&
+             (point.y > min_y || fabs(point.y - min_y) < EPS) &&
+             (max_y > point.y || fabs(max_y - point.y) < EPS) &&
+             (point.z > min_z || fabs(point.z - min_z) < EPS) &&
+             (max_z > point.z || fabs(max_z - point.z) < EPS) )
+             return i;
+    }
+}
+double ResUInPoint() {
+    Coord3 point;
+    cout << "Введите точку в которой необходимо узнать численное значение функции:" << endl;
+    cout << "-----------------------------------" << endl;
+    double min_x, max_x, min_y, max_y, min_z, max_z;
+    min_x = W[0].second[0]; max_x = W[W.size() - 1].second[1];
+    min_y = W[0].second[2]; max_y = W[W.size() - 1].second[3];
+    min_z = W[0].second[4]; max_z = W[W.size() - 1].second[5];
+
+    while (true) {
+        cout << "(Возможный диапазон значений по x:)" << endl;        
+        cout << "min:" << min_x << "    " << "max:" << max_x << endl;
+        cin >> point.x;
+        if ( (point.x > min_x || fabs(point.x - min_x) < EPS) &&
+             (max_x > point.x || fabs(max_x - point.x) < EPS) ) {
+             break;
+        }
+        else {
+            cout << endl << "ВВЕДЕНОЕ ЧИСЛО НЕ ПОПАДАЕТ В ДИАПАЗОН ДОПУСТИМЫХ ЗНАЧЕНИЙ!!!" << endl;
+        }            
+    }
+
+    while (true) {
+        cout << endl << "(Возможный диапазон значений по y:)" << endl;
+        cout << "min:" << min_y << "    " << "max:" << max_y << endl;
+        cin >> point.y;
+        if ( (point.y > min_y || fabs(point.y - min_y) < EPS) &&
+             (max_y > point.y || fabs(max_y - point.y) < EPS) ) {
+             break;
+        }
+        else {
+            cout << endl << "ВВЕДЕНОЕ ЧИСЛО НЕ ПОПАДАЕТ В ДИАПАЗОН ДОПУСТИМЫХ ЗНАЧЕНИЙ!!!" << endl;
+        }
+    }
+
+    while (true) {
+        cout << endl << "(Возможный диапазон значений по z:)" << endl;
+        cout << "min:" << min_z << "    " << "max:" << max_z << endl;
+        cin >> point.z;
+        if ( (point.z > min_z || fabs(point.z - min_z) < EPS) &&
+             (max_z > point.z || fabs(max_z - point.z) < EPS) ) {           
+             break;
+        }
+        else {
+            cout << endl << "ВВЕДЕНОЕ ЧИСЛО НЕ ПОПАДАЕТ В ДИАПАЗОН ДОПУСТИМЫХ ЗНАЧЕНИЙ!!!" << endl;
+        }
+    }
+    
+    int num_end_el = GetNumEndEl(point);
+    double res = 0;
+
+    for (int i = 0; i < array_p[num_end_el].second.size(); i++) {
+        int ind = array_p[num_end_el].second[i];
+
+        int ind_x_left = array_p[num_end_el].second[0];
+        int ind_x_middle = array_p[num_end_el].second[1];
+        int ind_x_right = array_p[num_end_el].second[2]; 
+
+        int ind_y_left = array_p[num_end_el].second[0];
+        int ind_y_middle = array_p[num_end_el].second[3];
+        int ind_y_right = array_p[num_end_el].second[6];
+
+        int ind_z_left = array_p[num_end_el].second[0];
+        int ind_z_middle = array_p[num_end_el].second[9];
+        int ind_z_right = array_p[num_end_el].second[18];
+
+        res += q[ind] * BasicFunc(i % 3, point.x, nodes[ind_x_left].x, nodes[ind_x_middle].x, nodes[ind_x_right].x) *
+                        BasicFunc((i / 3) % 3, point.y, nodes[ind_y_left].y, nodes[ind_y_middle].y, nodes[ind_y_right].y) *
+                        BasicFunc(i / 9, point.z, nodes[ind_z_left].z, nodes[ind_z_middle].z, nodes[ind_z_right].z);
+    }
+    return res;
 }
 #pragma endregion
 
@@ -704,10 +809,11 @@ int main()
     CreateVecFict();
     Test();
     Output_result();
-    Output_u();
-    Output_x();
-    Output_y();
-    Output_z();
+    cout << endl << "Численное значение функции: " << ResUInPoint() << endl;
+    //Output_u();
+    //Output_x();
+    //Output_y();
+    //Output_z();
 }
 
 

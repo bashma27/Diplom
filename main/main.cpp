@@ -823,7 +823,10 @@ double DerivativeLocalBasicFuncs(int i, double psi) {
 
 double F(vector<int> node_num, int num_sub) {
     double res = 0;
-
+    double h_x, h_y, h_z;
+    h_x = nodes[node_num[2]].x - nodes[node_num[0]].x;
+    h_y = nodes[node_num[6]].y - nodes[node_num[0]].y;
+    h_z = nodes[node_num[18]].z - nodes[node_num[0]].z;
     vector<double> line_matr_mass(27);
     line_matr_mass = {13.0 / 140.0, 1.0 / 21.0, -1.0 / 140.0, 1.0 / 21.0,
                       4.0 / 105.0, -2.0 / 105.0, -1.0 / 140.0, -2.0 / 105.0,
@@ -835,7 +838,7 @@ double F(vector<int> node_num, int num_sub) {
     for (int i = 0; i < 27; i++) {
         res += line_matr_mass[i] * f(num_sub, nodes[node_num[i]].x, nodes[node_num[i]].y);
     }
-    return res;
+    return res * h_x * h_y * h_z;
 }
 
 double CalcMixtureVFaceX(vector<int> node_num, int num_sub, int n) {

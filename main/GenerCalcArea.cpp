@@ -27,13 +27,14 @@ extern struct Coord3 {
 
 extern vector<vector<Coord2>> zone_perf; // массив зон перфорации
 extern vector<Coord3> nodes;
+extern int num_ph;
 extern int NUM_SPLIT_X, NUM_SPLIT_Y, NUM_SPLIT_Z; // суммарное количество разбиений по x, y, z
 extern int NUM_ZONE_PERF; // количество зон перфорации
 extern int NUM_NODES_IN_EDGE_X, NUM_NODES_IN_EDGE_Y, NUM_NODES_IN_EDGE_Z, NUM_NODES; // количество зон перфорации
 extern vector<pair<int, vector<double>>> W; // массив подобластей (первое значение пары - номер подобласти, второе - массив значений границ подобласти по x, y, z)
-extern vector<double> k, k_ph, eta_ph; // массивы коэффициентов структурной проницаемости,
-                                       //         коэффициентов относительной фазовой проницаемости,
-                                       //         коэффициентов динамической вязкости соответственно
+extern vector<vector<double>> k_ph; //массив коэффициентов множителей структурной проницаемости,
+extern vector<double> K, eta_ph; // массивы коэффициентов структурной проницаемости,    
+                                 //         коэффициентов динамической вязкости соответственно
 
 int Nx, Ny, Nz, L; // Nx - число границ по x, Ny - число границ по y, Nz - число границ по z, L - кол-во подобластей
 vector<double> Xw, Yw, Zw; // границы области
@@ -153,19 +154,28 @@ int Input_splits() {
 }
 
 int Input_coef() {
-    ifstream File("coef.txt");
-    if (!File.is_open()) return 1;
-    k.resize(L); k_ph.resize(L); eta_ph.resize(L);
+    ifstream File1("K.txt");
+    if (!File1.is_open()) return 1;
+    K.resize(L);
     for (int i = 0; i < L; i++) {
-        File >> k[i];
+        File1 >> K[i];
+    }
+    File1.close();
+
+    ifstream File2("ph.txt");
+    if (!File2.is_open()) return 1;
+    File2 >> num_ph;
+    k_ph.assign(L, vector<double>(num_ph));
+    eta_ph.resize(num_ph);
+    for (int i = 0; i < num_ph; i++) {
+        File2 >> eta_ph[i];
     }
     for (int i = 0; i < L; i++) {
-        File >> k_ph[i];
+        for (int j = 0; j < num_ph; j++) {
+            File2 >> k_ph[i][j]; 
+        }
     }
-    for (int i = 0; i < L; i++) {
-        File >> eta_ph[i];
-    }
-    File.close();
+    File2.close();
     return 0;
 }
 #pragma endregion

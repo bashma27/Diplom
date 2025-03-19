@@ -1,6 +1,7 @@
 ﻿#include <iostream>
 #include <fstream>
 #include <vector>
+#include <unordered_set>
 #include <set>
 #include <iomanip>
 #include <math.h>
@@ -36,13 +37,14 @@ vector<pair<int, vector<double>>> W;
 int NUM_ZONE_PERF; // количество зон перфорации
 int NUM_SPLIT_X, NUM_SPLIT_Y, NUM_SPLIT_Z; // суммарное количество разбиений по x, y, z
 int NUM_NODES_IN_EDGE_X, NUM_NODES_IN_EDGE_Y, NUM_NODES_IN_EDGE_Z, NUM_NODES;
+int num_ph;
 vector<int> ia, ja, choice;
 vector<double> aal, di, b, q, L_sq, di_sq, normal;
-vector<double> k, k_ph, eta_ph; // массивы коэффициентов структурной проницаемости,
-                                //         коэффициентов относительной фазовой проницаемости,
-                                //         коэффициентов динамической вязкости соответственно
+vector<vector<double>> k_ph; //массив коэффициентов множителей структурной проницаемости,
+vector<double> K, eta_ph; // массивы коэффициентов структурной проницаемости,    
+                          //         коэффициентов динамической вязкости соответственно
 vector<Coord3> nodes; // узлы сетки, заданные координатами 
-set<int> face_1; // множество с узлами первых краевых
+unordered_set<int> face_1; // массив с узлами первых краевых
 vector<pair<int, vector<int>>> face_2_zp; // массив граней с краевыми 2 рода зон перфорации
 vector<pair<int, vector<int>>> array_p; // массив параллелепипедов
 vector<vector<double>> G, M; // локальные матрицы масс и жесткости
@@ -53,15 +55,26 @@ vector<int> fict_nodes; // массив фиктивных узлов
 
 #pragma region Функции краевых условий, их функций и вектора правой части f
 double u_g(double x, double y, double z) { // краевое условие первого рода
-    return x * y;
+    //return x * x * y * y;
+    return x * x + y * y;
+    //return x + y;
+    //return y * y * y;
 }
 
 vector<double> grad_u(double x, double y) { // градиент функции u
-    return { y, x };
+    //return { 2 * x * y * y, 2 * y * x * x };
+    return { 2 * x, 2 * y };
+    //return { 1, 1 };
+    //return { 0, 3 * y * y };
 }
 
 double lambda(int num_sub) {
-    return k[num_sub] * k_ph[num_sub] / eta_ph[num_sub];
+    double res = 0;
+    for (int i = 0; i < num_ph; i++) {
+        res += k_ph[num_sub][i] / eta_ph[i];
+    }
+    res *= K[num_sub];
+    return res;
 }
 
 double theta(int num_sub, int num, double x, double y) { // краевое условие второго рода
@@ -83,7 +96,10 @@ double theta(int num_sub, int num, double x, double y) { // краевое ус�
 }
 
 double f(int num_sub, double x, double y) {
-    return 0;
+    //return - 2 * y * y * lambda(num_sub) - 2 * x * x * lambda(num_sub);
+    return - 4  * lambda(num_sub);
+    //return 0;
+    //return -6 * y * lambda(num_sub);
 }
 #pragma endregion
 
@@ -448,6 +464,8 @@ void BuildLocalMatrices() { // построение локальных матр�
     G[2][2] = 7, M[2][2] = 4;
 }
 
+
+
 void ConsiderBoundConditFirstType(int n) { // учет краевых условий первого типа
     double x, y, z;
     x = nodes[n].x, y = nodes[n].y, z = nodes[n].z;
@@ -455,7 +473,7 @@ void ConsiderBoundConditFirstType(int n) { // учет краевых услов
     di[n] = 1;
     for (int i = ia[n]; i < ia[n + 1]; i++) {
         int _i = ja[i];
-        if (face_1.count(_i)) {
+        if (face_1.find(_i) != face_1.end()) {
             aal[i] = 0;
             continue;
         }
@@ -466,7 +484,7 @@ void ConsiderBoundConditFirstType(int n) { // учет краевых услов
         int k = 0;
         for (int j = ia[i]; j < ia[i + 1]; j++) {
             if (ja[j] == n) {
-                if (face_1.count(i)) {
+                if (face_1.find(i) != face_1.end()) {
                     aal[j] = 0;
                     continue;
                 }
@@ -787,6 +805,149 @@ void Output_z() {
 }
 #pragma endregion
 
+#pragma region Расчет объема смеси, небаланса
+double DerivativeLocalBasicFuncs(int i, double psi) {
+    switch (i)
+    {
+    case 0:
+        return 4 * psi - 3;
+        break;
+    case 1:
+        return -8 * psi + 4;
+        break;
+    case 2:
+        return 4 * psi - 1;
+        break;
+    }
+}
+
+double F(vector<int> node_num, int num_sub) {
+    double res = 0;
+
+    vector<double> line_matr_mass(27);
+    line_matr_mass = {13.0 / 140.0, 1.0 / 21.0, -1.0 / 140.0, 1.0 / 21.0,
+                      4.0 / 105.0, -2.0 / 105.0, -1.0 / 140.0, -2.0 / 105.0,
+                      -1.0 / 140.0, 1.0 / 21.0, 4.0 / 105.0, -2.0 / 105.0, 
+                      4.0 / 105.0, 16.0 / 35.0, 4.0 / 105.0, -2.0 / 105.0, 
+                      4.0 / 105.0, 1.0 / 21.0, -1.0 / 140.0, -2.0 / 105.0, 
+                      -1.0 / 140.0, -2.0 / 105.0, 4.0 / 105.0, 1.0 / 21.0, 
+                      -1.0 / 140.0, 1.0 / 21.0, 13.0 / 140.0 };
+    for (int i = 0; i < 27; i++) {
+        res += line_matr_mass[i] * f(num_sub, nodes[node_num[i]].x, nodes[node_num[i]].y);
+    }
+    return res;
+}
+
+double CalcMixtureVFaceX(vector<int> node_num, int num_sub, int n) {
+    double h_x, h_y, h_z;
+    h_x = nodes[node_num[2]].x - nodes[node_num[0]].x;
+    h_y = nodes[node_num[6]].y - nodes[node_num[0]].y;
+    h_z = nodes[node_num[18]].z - nodes[node_num[0]].z;
+    vector<double> line_matr_mass(27);
+    line_matr_mass = { 4, 4, 4, 2, 2, 2, -1, -1, -1, 2, 2, 2, 16, 16, 16,
+                       2, 2, 2, -1, -1, -1, 2, 2, 2, 4, 4, 4 };
+    double res = 0;
+    for (int i = 0; i < 27; i++) {
+        if (n == -1) {
+            double psi = 0;
+            res += q[node_num[i]] * line_matr_mass[i] * DerivativeLocalBasicFuncs(i % 3, psi);
+        }
+        else {
+            double psi = 1;
+            res += -q[node_num[i]] * line_matr_mass[i] * DerivativeLocalBasicFuncs(i % 3, psi);
+        }   
+    }
+    res *= h_y * h_z * lambda(num_sub) / (30.0 * h_x);
+    return res;
+}
+
+double CalcMixtureVFaceY(vector<int> node_num, int num_sub, int n) {
+    double h_x, h_y, h_z;
+    h_x = nodes[node_num[2]].x - nodes[node_num[0]].x;
+    h_y = nodes[node_num[6]].y - nodes[node_num[0]].y;
+    h_z = nodes[node_num[18]].z - nodes[node_num[0]].z;
+    vector<double> line_matr_mass(27);
+    line_matr_mass = { 4, 2, -1, 4, 2, -1, 4, 2, -1, 2, 16, 2, 2, 16, 2,
+                       2, 16, 2, -1, 2, 4, -1, 2, 4, -1, 2, 4};
+    double res = 0;
+    for (int i = 0; i < 27; i++) {
+        if (n == -1) {
+            double psi = 0;
+            res += q[node_num[i]] * line_matr_mass[i] * DerivativeLocalBasicFuncs((i / 3) % 3, psi);
+        }
+        else {
+            double psi = 1;
+            res += -q[node_num[i]] * line_matr_mass[i] * DerivativeLocalBasicFuncs((i / 3) % 3, psi);
+        }
+    }
+    res *= h_x * h_z * lambda(num_sub) / (30.0 * h_y);
+    return res;
+}
+
+double CalcMixtureVFaceZ(vector<int> node_num, int num_sub, int n) {
+    double h_x, h_y, h_z;
+    h_x = nodes[node_num[2]].x - nodes[node_num[0]].x;
+    h_y = nodes[node_num[6]].y - nodes[node_num[0]].y;
+    h_z = nodes[node_num[18]].z - nodes[node_num[0]].z;
+    vector<double> line_matr_mass(27);
+    line_matr_mass = { 4, 2, -1, 2, 16, 2, -1, 2, 4, 4, 2, -1, 2, 16, 2,
+                       -1, 2, 4, 4, 2, -1, 2, 16, 2, -1, 2, 4 };
+    double res = 0;
+    for (int i = 0; i < 27; i++) {
+        if (n == -1) {
+            double psi = 0;
+            res += q[node_num[i]] * line_matr_mass[i] * DerivativeLocalBasicFuncs(i / 9, psi);
+        }
+        else {
+            double psi = 1;
+            res += -q[node_num[i]] * line_matr_mass[i] * DerivativeLocalBasicFuncs(i / 9, psi);
+        }
+    }
+    res *= h_x * h_y * lambda(num_sub) / (30.0 * h_z);
+    return res; 
+}
+
+double CalcNonBalance(int num_end_el) {
+    int n;
+    double res = 0;
+    vector<int> node_num(27);
+    for (int j = 0; j < 27; j++) {
+        node_num[j] = array_p[num_end_el].second[j];
+    }
+    int num_sub = array_p[num_end_el].first;
+
+    res -= F(node_num, num_sub);
+    // для нижней грании
+    n = -1;
+    res += CalcMixtureVFaceZ(node_num, num_sub, n);
+
+    // для верхней грании
+    n = 1;
+    res += CalcMixtureVFaceZ(node_num, num_sub, n);
+
+    // для передней грании
+    n = -1;
+    res += CalcMixtureVFaceY(node_num, num_sub, n);
+
+    // для задней грании
+    n = 1;
+    res += CalcMixtureVFaceY(node_num, num_sub, n);
+
+    // для левой грании
+    n = -1;
+    res += CalcMixtureVFaceX(node_num, num_sub, n);
+
+    // для правой грании
+    n = 1;
+    res += CalcMixtureVFaceX(node_num, num_sub, n);
+
+    // учет F
+    
+
+    return res;
+}
+#pragma endregion
+
 int main()
 {
     setlocale(LC_ALL, "Russian");
@@ -808,8 +969,11 @@ int main()
     MSG::LU_sq_MSG(q, r, z, Az, Mult, NUM_NODES, eps, max_iter);
     CreateVecFict();
     Test();
-    Output_result();
-    cout << endl << "Численное значение функции: " << ResUInPoint() << endl;
+    int num_end_el = 21;
+    double res = CalcNonBalance(num_end_el); 
+    cout << endl << "Небаланс на элементе " << num_end_el + 1 << " равен: " << res << endl;
+    //Output_result();
+    //cout << endl << "Численное значение функции: " << ResUInPoint() << endl;
     //Output_u();
     //Output_x();
     //Output_y();

@@ -53,18 +53,30 @@ vector<int> i_ident_fict;
 vector<int> fict_nodes; // массив фиктивных узлов
 #pragma endregion
 
+#pragma region Константы для аналитического решения
+//double _theta = 0.79 / 86400.0;
+double _theta = 180;
+double r_w = 1;
+double R = 105;
+double P_g = 130;
+#pragma endregion
+
 #pragma region Функции краевых условий, их функций и вектора правой части f
 double u_g(double x, double y, double z) { // краевое условие первого рода
     //return x * x * y * y;
-    return x * x + y * y;
+    //return x * x + y * y;
+    return P_g;
     //return x + y;
+    //return 130 (атмосфер);
+    //return y * y * y * y;
     //return y * y * y;
 }
 
 vector<double> grad_u(double x, double y) { // градиент функции u
     //return { 2 * x * y * y, 2 * y * x * x };
-    return { 2 * x, 2 * y };
-    //return { 1, 1 };
+    //return { 2 * x, 2 * y };
+    return { 0, 0 };
+    //return { 0, 4 * y * y * y};
     //return { 0, 3 * y * y };
 }
 
@@ -80,25 +92,38 @@ double lambda(int num_sub) {
 double theta(int num_sub, int num, double x, double y) { // краевое условие второго рода
     switch (num)
     {
-    case 0:
+    /*case 0:
         return grad_u(x, y)[1] * 1 * lambda(num_sub);
         break;
     case 1:
         return grad_u(x, y)[1] * (-1) * lambda(num_sub);
         break;
     case 2:
-        return grad_u(x, y)[0] * (1) * lambda(num_sub);
+        return grad_u(x, y)[0] * 1 * lambda(num_sub);
         break;
     case 3:
         return grad_u(x, y)[0] * (-1) * lambda(num_sub);
+        break;*/
+    case 0:
+        return _theta;
+        break;
+    case 1:
+        return -_theta;
+        break;
+    case 2:
+        return _theta;
+        break;
+    case 3:
+        return -_theta;
         break;
     }
 }
 
 double f(int num_sub, double x, double y) {
     //return - 2 * y * y * lambda(num_sub) - 2 * x * x * lambda(num_sub);
-    return - 4  * lambda(num_sub);
-    //return 0;
+    //return -4 * lambda(num_sub);
+    return 0;
+    //return - 12 * y * y * lambda(num_sub);
     //return -6 * y * lambda(num_sub);
 }
 #pragma endregion
@@ -524,9 +549,42 @@ void ConsiderFictitiousNodes() { // учет фиктивных узлов
     }
 }
 
+void _ConsiderBoundConditFirstType(int n) { // учет краевых условий первого типа
+    double x, y, z;
+    x = nodes[n].x, y = nodes[n].y, z = nodes[n].z;
+    b[n] = 150;
+    di[n] = 1;
+    for (int i = ia[n]; i < ia[n + 1]; i++) {
+        int _i = ja[i];
+        if (face_1.find(_i) != face_1.end()) {
+            aal[i] = 0;
+            continue;
+        }
+        b[_i] -= b[n] * aal[i];
+        aal[i] = 0;
+    }
+    for (int i = n; i < NUM_NODES; i++) {
+        int k = 0;
+        for (int j = ia[i]; j < ia[i + 1]; j++) {
+            if (ja[j] == n) {
+                if (face_1.find(i) != face_1.end()) {
+                    aal[j] = 0;
+                    continue;
+                }
+                b[i] -= b[n] * aal[j];
+                aal[j] = 0;
+            }
+        }
+    }
+}
+
 void ConsiderBoundConditSecType(int num_face_2_zp) { // учет краевых условий второго типа
     vector<double> b_s2(9, 0);
     vector<double> _theta(9);
+    /*for (int i = 0; i < 9; i++) {
+        _ConsiderBoundConditFirstType(face_2_zp[num_face_2_zp].second[i]);
+    }
+    return;*/
     for (int i = 0; i < 9; i++) {
         _theta[i] = theta(face_2_zp[num_face_2_zp].second[9], face_2_zp[num_face_2_zp].first,
                            nodes[face_2_zp[num_face_2_zp].second[i]].x,
@@ -679,54 +737,7 @@ int GetNumEndEl(Coord3 point) { // получить номер конечног�
              return i;
     }
 }
-double ResUInPoint() {
-    Coord3 point;
-    cout << "Введите точку в которой необходимо узнать численное значение функции:" << endl;
-    cout << "-----------------------------------" << endl;
-    double min_x, max_x, min_y, max_y, min_z, max_z;
-    min_x = W[0].second[0]; max_x = W[W.size() - 1].second[1];
-    min_y = W[0].second[2]; max_y = W[W.size() - 1].second[3];
-    min_z = W[0].second[4]; max_z = W[W.size() - 1].second[5];
-
-    while (true) {
-        cout << "(Возможный диапазон значений по x:)" << endl;        
-        cout << "min:" << min_x << "    " << "max:" << max_x << endl;
-        cin >> point.x;
-        if ( (point.x > min_x || fabs(point.x - min_x) < EPS) &&
-             (max_x > point.x || fabs(max_x - point.x) < EPS) ) {
-             break;
-        }
-        else {
-            cout << endl << "ВВЕДЕНОЕ ЧИСЛО НЕ ПОПАДАЕТ В ДИАПАЗОН ДОПУСТИМЫХ ЗНАЧЕНИЙ!!!" << endl;
-        }            
-    }
-
-    while (true) {
-        cout << endl << "(Возможный диапазон значений по y:)" << endl;
-        cout << "min:" << min_y << "    " << "max:" << max_y << endl;
-        cin >> point.y;
-        if ( (point.y > min_y || fabs(point.y - min_y) < EPS) &&
-             (max_y > point.y || fabs(max_y - point.y) < EPS) ) {
-             break;
-        }
-        else {
-            cout << endl << "ВВЕДЕНОЕ ЧИСЛО НЕ ПОПАДАЕТ В ДИАПАЗОН ДОПУСТИМЫХ ЗНАЧЕНИЙ!!!" << endl;
-        }
-    }
-
-    while (true) {
-        cout << endl << "(Возможный диапазон значений по z:)" << endl;
-        cout << "min:" << min_z << "    " << "max:" << max_z << endl;
-        cin >> point.z;
-        if ( (point.z > min_z || fabs(point.z - min_z) < EPS) &&
-             (max_z > point.z || fabs(max_z - point.z) < EPS) ) {           
-             break;
-        }
-        else {
-            cout << endl << "ВВЕДЕНОЕ ЧИСЛО НЕ ПОПАДАЕТ В ДИАПАЗОН ДОПУСТИМЫХ ЗНАЧЕНИЙ!!!" << endl;
-        }
-    }
-    
+double ResUInPoint(Coord3 point) {
     int num_end_el = GetNumEndEl(point);
     double res = 0;
 
@@ -919,35 +930,96 @@ double CalcNonBalance(int num_end_el) {
     }
     int num_sub = array_p[num_end_el].first;
 
-    res -= F(node_num, num_sub);
+    res += F(node_num, num_sub);
     // для нижней грании
     n = -1;
-    res += CalcMixtureVFaceZ(node_num, num_sub, n);
+    res -= CalcMixtureVFaceZ(node_num, num_sub, n);
 
     // для верхней грании
     n = 1;
-    res += CalcMixtureVFaceZ(node_num, num_sub, n);
+    res -= CalcMixtureVFaceZ(node_num, num_sub, n);
 
     // для передней грании
     n = -1;
-    res += CalcMixtureVFaceY(node_num, num_sub, n);
+    res -= CalcMixtureVFaceY(node_num, num_sub, n);
 
     // для задней грании
     n = 1;
-    res += CalcMixtureVFaceY(node_num, num_sub, n);
+    res -= CalcMixtureVFaceY(node_num, num_sub, n);
 
     // для левой грании
     n = -1;
-    res += CalcMixtureVFaceX(node_num, num_sub, n);
+    res -= CalcMixtureVFaceX(node_num, num_sub, n);
 
     // для правой грании
     n = 1;
-    res += CalcMixtureVFaceX(node_num, num_sub, n);
+    res -= CalcMixtureVFaceX(node_num, num_sub, n);
 
     // учет F
     
 
     return res;
+}
+
+
+double _CalcNonBalance(int num_end_el) {
+    int n;
+    double res = 0;
+    vector<int> node_num(27);
+    for (int j = 0; j < 27; j++) {
+        node_num[j] = array_p[num_end_el].second[j];
+    }
+    int num_sub = array_p[num_end_el].first;
+
+    // для левой грании
+    n = -1;
+    res = CalcMixtureVFaceX(node_num, num_sub, n);
+
+    // для правой грании
+    n = 1;
+    res = CalcMixtureVFaceX(node_num, num_sub, n);
+
+    // учет F
+
+
+    return res;
+}
+
+double CalcSumNonBalance() {
+    double res = 0;
+    for (int i = 0; i < NUM_SPLIT_X * NUM_SPLIT_Y * NUM_SPLIT_Z; i++) {
+
+        auto result = find(begin(ident_fict), end(ident_fict), array_p[i].second[0]);
+        if (result != end(ident_fict)) i += i_ident_fict[result - begin(ident_fict)];
+
+        res += CalcNonBalance(i);
+    }
+    return res;
+}
+#pragma endregion
+
+#pragma region Сравнение с аналитическим решением
+double AnalitP(double r) {
+    double res = _theta * r_w / lambda(0) * log(R / r) + P_g;
+
+    return res;
+}
+
+void VecAnalitP() {
+    double h_r = nodes[1].x - nodes[0].x;
+    double curr_r = 1;
+    double norm_true = 0, norm_err = 0;
+    while (curr_r <= R) {
+        double analyt_value_P = AnalitP(curr_r);
+        Coord3 p(curr_r, 0, 0.5);
+        double num_value_P = ResUInPoint(p);
+        cout << curr_r << " " << num_value_P << endl;
+        norm_err += (analyt_value_P - num_value_P) * (analyt_value_P - num_value_P);
+        norm_true += num_value_P * num_value_P;
+        curr_r += h_r;
+    }
+    cout << endl << "Относительная норма вектора погрешности для аналитического решения:" << endl;
+    cout << sqrt(norm_err) / sqrt(curr_r) << endl << endl;
 }
 #pragma endregion
 
@@ -972,9 +1044,12 @@ int main()
     MSG::LU_sq_MSG(q, r, z, Az, Mult, NUM_NODES, eps, max_iter);
     CreateVecFict();
     Test();
-    int num_end_el = 21;
-    double res = CalcNonBalance(num_end_el); 
-    cout << endl << "Небаланс на элементе " << num_end_el + 1 << " равен: " << res << endl;
+    //_CalcNonBalance(900);
+    cout << endl << "Суммарный небаланс на всех элементах: " << CalcSumNonBalance() << endl;
+    
+    vector<double> vec_analit_P;
+    VecAnalitP();
+    
     //Output_result();
     //cout << endl << "Численное значение функции: " << ResUInPoint() << endl;
     //Output_u();

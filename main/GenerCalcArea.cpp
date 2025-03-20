@@ -139,8 +139,21 @@ int Input_splits() {
         File >> ni >> qi >> degree_qi;
         coef[1][i] = { ni, pow(qi, 1.0 / degree_qi) };
     }
-    File >> ni >> qi >> degree_qi;
-    coef[2][0] = {ni, pow(qi, 1.0 / degree_qi)};
+    for (int i = 0; i < Nz - 1; i++) {
+        File >> ni >> qi >> degree_qi;
+        coef[2][i] = { ni, pow(qi, 1.0 / degree_qi) };
+    }
+    int n1, n2, n3;
+    File >> n1 >> n2 >> n3;
+    for (int i = 0; i < Nx - 1; i++) {
+        coef[0][i].first *= pow(2, n1);
+    }
+    for (int i = 0; i < Ny - 1; i++) {
+        coef[1][i].first *= pow(2, n2);
+    }
+    for (int i = 0; i < Nz - 1; i++) {
+        coef[2][i].first *= pow(2, n3);
+    }
     File.close();
     NUM_SPLIT_X = CalcSum_ni(0, 0, Nx - 1);
     NUM_SPLIT_Y = CalcSum_ni(1, 0, Ny - 1);

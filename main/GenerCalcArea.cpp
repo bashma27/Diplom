@@ -172,6 +172,7 @@ int Input_coef() {
     K.resize(L);
     for (int i = 0; i < L; i++) {
         File1 >> K[i];
+        K[i] *= 1e-15; // !!! перевод милиДарси в м2 (м2 - проницаемость в СИ)
     }
     File1.close();
 

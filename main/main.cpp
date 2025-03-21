@@ -54,11 +54,11 @@ vector<int> fict_nodes; // массив фиктивных узлов
 #pragma endregion
 
 #pragma region Константы для аналитического решения
-//double _theta = 0.79 / 86400.0;
-double _theta = 180;
+//double _theta = 180;
 double r_w = 1;
 double R = 105;
-double P_g = 130;
+double P_g = 130 * 101325.; // !!! [атмосферы] * (коэф для перевода атм в Па) 
+double _theta = 0.79 / 86400.0 / (2. * 3.1415926 * r_w * 1.); // !!! [м3/сут] / (секунды в 24 часах) / (2*PI*R_well*h_well)
 #pragma endregion
 
 #pragma region Функции краевых условий, их функций и вектора правой части f
@@ -104,17 +104,30 @@ double theta(int num_sub, int num, double x, double y) { // краевое ус�
     case 3:
         return grad_u(x, y)[0] * (-1) * lambda(num_sub);
         break;*/
+
+
+        //  !!!  например по правой стороне поток из скважины (нагнетательная) для элемента в сетке будет означать отрицательный поток (против внешней нормали)
+        // 
+        //  ось Y
+        //   ______ ______
+        //  |      | real |
+        //  | well | elem |
+        //   ------ ------  > ось X
+        //    поэтому тетты в данном случае для нагнетальной скважины будут 
+        //  меньше 0 для "1" и "3" локальных граней, 
+        //  больше 0 для "0" и "2"
+
     case 0:
-        return _theta;
+        return -_theta;
         break;
     case 1:
-        return -_theta;
-        break;
-    case 2:
         return _theta;
         break;
-    case 3:
+    case 2:
         return -_theta;
+        break;
+    case 3:
+        return _theta;
         break;
     }
 }
@@ -224,7 +237,8 @@ void GeneratePortrait() { // генерация портрета матрицы
     di_sq.resize(NUM_NODES);
 }
 
-void AddLocalMatr(vector<int> node_num, vector<vector<double>> loc_matr) { // добавление матрицы в глобальную
+// !!! все сложные структуры стоит передавать по указател/ссылке, чтобы не создавалась копия; если надо быть уверенным, что ничего в этом объекте не изменится, можно использовать const
+void AddLocalMatr(vector<int>& node_num, vector<vector<double>>& loc_matr) { // добавление матрицы в глобальную
     for (int i = 0; i < 27; i++) {
         di[node_num[i]] += loc_matr[i][i];
     }
@@ -243,13 +257,13 @@ void AddLocalMatr(vector<int> node_num, vector<vector<double>> loc_matr) { // д
     }
 }
 
-void AddLocalVec(vector<int> node_num, vector<double> loc_vec) { // добавление вектора в глобальный
+void AddLocalVec(vector<int> node_num, vector<double>& loc_vec) { // добавление вектора в глобальный
     for (int i = 0; i < 27; i++) {
         b[node_num[i]] += loc_vec[i];
     }
 }
 
-void AddLocalVecBound(int num_face_2_zp, vector<double> vec) { // добавление вектора из второго краевого в глобальный
+void AddLocalVecBound(int num_face_2_zp, vector<double>& vec) { // добавление вектора из второго краевого в глобальный
     for (int i = 0; i < 9; i++) {
         b[face_2_zp[num_face_2_zp].second[i]] += vec[i];
     }
@@ -541,8 +555,12 @@ void CreateVecFict() {
 }
 
 void ConsiderFictitiousNodes() { // учет фиктивных узлов
+    // !!! вот эта проверка может быть долгой, особенно с дроблением сетки; 
+    // как вариант - можно просто проверять, что диагональный элемент 0 (если была инициальзация нулями и не было вкладов - то элемент диагонали останется нулем)
+    // или собрать список фиктивных узлов, как и элементов - их будет мало относительно полной сетки
     for (int i = 0; i < NUM_NODES; i++) {
-        if (IsFictitious(i)) {
+        //if (IsFictitious(i)) {
+        if (di[i] == 0) {
             b[i] = 0;
             di[i] = double(1);
         }
@@ -620,10 +638,15 @@ void ConsiderBoundCondit() { // учет всех краевых
     for (int i = 0; i < face_2_zp.size(); i++) { // учет вторых краевых
         ConsiderBoundConditSecType(i);
     }
+    cout << "second" << endl;
     for (int n : face_1) { // учет первых краевых
         ConsiderBoundConditFirstType(n);
     }
+    // !!! первые краевые подозрительно долго применяются; учитывая поиски в цикле возможно стоит или делать обычный set (чтобы он сам сортировался), или что-то с хэш-поиском использовать (вроде map) 
+    cout << "first" << endl;
     ConsiderFictitiousNodes();
+    cout << "fiction" << endl;
+
 }
 #pragma endregion
 
@@ -1012,27 +1035,42 @@ void VecAnalitP() {
     while (curr_r <= R) {
         double analyt_value_P = AnalitP(curr_r);
         Coord3 p(curr_r, 0, 0.5);
-        double num_value_P = ResUInPoint(p);
-        cout << curr_r << " " << num_value_P << endl;
+        double num_value_P = ResUInPoint(p); // !!! т.к. аналитическое тоже в паскалях, лучше перевести давление в атмосферы исключительно на выдачу
+        cout << curr_r << '\t' << num_value_P / 101325. << '\t' << analyt_value_P / 101325. << endl;
         norm_err += (analyt_value_P - num_value_P) * (analyt_value_P - num_value_P);
         norm_true += num_value_P * num_value_P;
         curr_r += h_r;
     }
+    curr_r = R;
+    double analyt_value_P = AnalitP(curr_r);
+    Coord3 p(curr_r, 0, 0.5);
+    double num_value_P = ResUInPoint(p); // т.к. аналитическое тоже в паскалях, лучше перевести давление в атмосферы исключительно на выдачу
+    cout << curr_r << '\t' << num_value_P / 101325. << '\t' << analyt_value_P / 101325. << endl;
+    norm_err += (analyt_value_P - num_value_P) * (analyt_value_P - num_value_P);
+    norm_true += num_value_P * num_value_P;
+
     cout << endl << "Относительная норма вектора погрешности для аналитического решения:" << endl;
-    cout << sqrt(norm_err) / sqrt(curr_r) << endl << endl;
+    cout << sqrt(norm_err) / sqrt(norm_true) << endl << endl; // !!! тут проcто опечатка, нормировка не на то была
 }
 #pragma endregion
 
 int main()
 {
     setlocale(LC_ALL, "Russian");
+    cout << "GenGrid" << endl;
     GenEndElGrid();
+    cout << "ArrayParallelepipeds" << endl;
     ArrayParallelepipeds();
+    cout << "GeneratePortrait" << endl;
     GeneratePortrait();
+    cout << "GenFirstBoundCondit" << endl;
     GenFirstBoundCondit();
+    cout << "GenSecBoundCondit" << endl;
     GenSecBoundCondit();
+    cout << "BuildMatrA_VecB" << endl;
     BuildLocalMatrices();
     BuildMatrA_VecB();
+    cout << "ConsiderBoundCondit" << endl;
     ConsiderBoundCondit();
     q.resize(NUM_NODES, 0);
     vector<double> r(NUM_NODES);

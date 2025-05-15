@@ -27,6 +27,7 @@ extern struct Coord3 {
 
 extern vector<vector<Coord2>> zone_perf; // массив зон перфорации
 extern vector<Coord3> nodes;
+extern vector<double> set_flow_zp; // заданный поток зон перфорации
 extern int num_ph;
 extern int NUM_SPLIT_X, NUM_SPLIT_Y, NUM_SPLIT_Z; // суммарное количество разбиений по x, y, z
 extern int NUM_ZONE_PERF; // количество зон перфорации
@@ -34,7 +35,7 @@ extern int NUM_NODES_IN_EDGE_X, NUM_NODES_IN_EDGE_Y, NUM_NODES_IN_EDGE_Z, NUM_NO
 extern vector<pair<int, vector<double>>> W; // массив подобластей (первое значение пары - номер подобласти, второе - массив значений границ подобласти по x, y, z)
 extern vector<vector<double>> k_ph; //массив коэффициентов множителей структурной проницаемости,
 extern vector<double> K, eta_ph; // массивы коэффициентов структурной проницаемости,    
-                                 //         коэффициентов динамической вязкости соответственно
+//         коэффициентов динамической вязкости соответственно
 
 int Nx, Ny, Nz, L; // Nx - число границ по x, Ny - число границ по y, Nz - число границ по z, L - кол-во подобластей
 vector<double> Xw, Yw, Zw; // границы области
@@ -100,19 +101,29 @@ int InputZonePerf() { // ввод координат зон перфорации
     for (int i = 0; i < NUM_ZONE_PERF; i++) {
         zone_perf[i].resize(2);
         double value;
-        File >> value; if(!InVectorDouble(value, Xw)) Xw.push_back(value);
+        File >> value; if (!InVectorDouble(value, Xw)) Xw.push_back(value);
         zone_perf[i][0].x = value;
-        File >> value; if(!InVectorDouble(value, Xw)) Xw.push_back(value);
+        File >> value; if (!InVectorDouble(value, Xw)) Xw.push_back(value);
         zone_perf[i][1].x = value;
-        File >> value; if(!InVectorDouble(value, Yw)) Yw.push_back(value);
+        File >> value; if (!InVectorDouble(value, Yw)) Yw.push_back(value);
         zone_perf[i][0].y = value;
-        File >> value; if(!InVectorDouble(value, Yw)) Yw.push_back(value);
+        File >> value; if (!InVectorDouble(value, Yw)) Yw.push_back(value);
         zone_perf[i][1].y = value;
     }
     File.close();
     sort(Xw.begin(), Xw.end(), [](const double& a, const double& b) {return a < b; });
     sort(Yw.begin(), Yw.end(), [](const double& a, const double& b) {return a < b; });
     Nx = Xw.size(); Ny = Yw.size(); Nz = Zw.size();
+    return 0;
+}
+
+int InputSetFlowZonePerf() { // ввод заданных потоков на зонах перфорации
+    ifstream File("set_flow_zone_perf.txt");
+    if (!File.is_open()) return 1;
+    for (int i = 0; i < NUM_ZONE_PERF; i++) {
+        set_flow_zp.resize(NUM_ZONE_PERF);
+        File >> set_flow_zp[i];
+    }
     return 0;
 }
 
@@ -130,18 +141,18 @@ int Input_splits() {
     coef.resize(3);
     coef[0].resize(Nx - 1); coef[1].resize(Ny - 1); coef[2].resize(1);
     int ni;
-    double qi, degree_qi;
+    double qi;
     for (int i = 0; i < Nx - 1; i++) {
-        File >> ni >> qi >> degree_qi;
-        coef[0][i] = {ni, pow(qi, 1.0 / degree_qi)};
+        File >> ni >> qi;
+        coef[0][i] = { ni, qi };
     }
     for (int i = 0; i < Ny - 1; i++) {
-        File >> ni >> qi >> degree_qi;
-        coef[1][i] = { ni, pow(qi, 1.0 / degree_qi) };
+        File >> ni >> qi;
+        coef[1][i] = { ni, qi };
     }
     for (int i = 0; i < Nz - 1; i++) {
-        File >> ni >> qi >> degree_qi;
-        coef[2][i] = { ni, pow(qi, 1.0 / degree_qi) };
+        File >> ni >> qi;
+        coef[2][i] = { ni, qi };
     }
     int n1, n2, n3;
     File >> n1 >> n2 >> n3;
@@ -153,6 +164,16 @@ int Input_splits() {
     }
     for (int i = 0; i < Nz - 1; i++) {
         coef[2][i].first *= pow(2, n3);
+    }
+
+    for (int i = 0; i < Nx - 1; i++) {
+        coef[0][i].second = pow(coef[0][i].second, 1. / pow(2, n1));
+    }
+    for (int i = 0; i < Ny - 1; i++) {
+        coef[1][i].second = pow(coef[1][i].second, 1. / pow(2, n2));
+    }
+    for (int i = 0; i < Nz - 1; i++) {
+        coef[2][i].second = pow(coef[2][i].second, 1. / pow(2, n3));
     }
     File.close();
     NUM_SPLIT_X = CalcSum_ni(0, 0, Nx - 1);
@@ -172,6 +193,7 @@ int Input_coef() {
     K.resize(L);
     for (int i = 0; i < L; i++) {
         File1 >> K[i];
+        //K[i] *= 1e-15; // !!! перевод милиДарси в м2 (м2 - проницаемость в СИ)
     }
     File1.close();
 
@@ -185,7 +207,7 @@ int Input_coef() {
     }
     for (int i = 0; i < L; i++) {
         for (int j = 0; j < num_ph; j++) {
-            File2 >> k_ph[i][j]; 
+            File2 >> k_ph[i][j];
         }
     }
     File2.close();
@@ -199,6 +221,7 @@ void GenEndElGrid() {
     InputZonePerf();
     Input_splits();
     Input_coef();
+    InputSetFlowZonePerf();
     int nx = 0, ny = 0, nz = 0, j = 0, i = 0; //nx и ny для подсчёта кол-ва разбиений до нужной точки
     int it = 0; // текущий номер последнего элемента в nodes
     double qx = 1.0, qy = 1.0, qz = 1.0, hy = 0.0, hx = 0.0, hz = 0.0, y = 0.0, z = 0.0;
@@ -209,7 +232,7 @@ void GenEndElGrid() {
             hz = (Zw[_i + 1] - Zw[_i]) / nz;
         else
             hz = (Zw[_i + 1] - Zw[_i]) * (qz - 1) / (pow(qz, nz) - 1);
-        for (int m = 0; m < nz; m++) {           
+        for (int m = 0; m < nz; m++) {
             if (abs(qz - 1.0) < EPS)
                 z = Zw[_i] + hz * m;
             else
@@ -405,7 +428,7 @@ void GenEndElGrid() {
     // добавление фиктивных узлов по z
     it = NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y;
     for (int m = 0; m < NUM_NODES_IN_EDGE_Z - nz - 1; m++) {
-        for (int _i = 0; _i < NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y;_i++) {
+        for (int _i = 0; _i < NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y; _i++) {
             for (int __i = 0; __i < NUM_NODES_IN_EDGE_X; __i++) {
                 nodes[it + _i + __i].x = nodes[it + _i + __i - NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y].x;
                 nodes[it + _i + __i].y = nodes[it + _i + __i - NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y].y;

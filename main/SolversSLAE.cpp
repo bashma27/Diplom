@@ -5,7 +5,7 @@
 using namespace std;
 
 extern vector<int> ia, ja;
-extern vector<double> aal, di, b, q, L_sq, di_sq;
+extern vector<double> aal, di, b, L_sq, di_sq;
 
 namespace MSG {
     double ScalarMult(vector<double>& first_vec, vector<double>& second_vec, int n) {

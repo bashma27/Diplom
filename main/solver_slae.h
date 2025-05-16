@@ -1,6 +1,6 @@
 #pragma once
-
-using namespace std;
+#include "types.h"
+#include "globals.h"
 
 // пространство имен для решателя СЛАУ МСГ
 namespace MSG {

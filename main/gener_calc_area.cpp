@@ -1,41 +1,4 @@
-#include <fstream>
-#include <vector>
-#include <algorithm>
-#define EPS 1e-16 //Для сравнения double
-
-using namespace std;
-
-extern struct Coord2 {
-    double x, y;
-    Coord2(double _x, double _y) {
-        x = _x; y = _y;
-    }
-    Coord2() {
-        x = 0; y = 0;
-    }
-};
-
-extern struct Coord3 {
-    double x, y, z;
-    Coord3(double _x, double _y, double _z) {
-        x = _x; y = _y; z = _z;
-    }
-    Coord3() {
-        x = 0; y = 0; z = 0;
-    }
-};
-
-extern vector<vector<Coord2>> zone_perf; // массив зон перфорации
-extern vector<Coord3> nodes;
-extern vector<double> set_flow_zp; // заданный поток зон перфорации
-extern int num_ph;
-extern int NUM_SPLIT_X, NUM_SPLIT_Y, NUM_SPLIT_Z; // суммарное количество разбиений по x, y, z
-extern int NUM_ZONE_PERF; // количество зон перфорации
-extern int NUM_NODES_IN_EDGE_X, NUM_NODES_IN_EDGE_Y, NUM_NODES_IN_EDGE_Z, NUM_NODES; // количество зон перфорации
-extern vector<pair<int, vector<double>>> W; // массив подобластей (первое значение пары - номер подобласти, второе - массив значений границ подобласти по x, y, z)
-extern vector<vector<double>> k_ph; //массив коэффициентов множителей структурной проницаемости,
-extern vector<double> K, eta_ph; // массивы коэффициентов структурной проницаемости,    
-//         коэффициентов динамической вязкости соответственно
+#include "gener_calc_area.h"
 
 int Nx, Ny, Nz, L; // Nx - число границ по x, Ny - число границ по y, Nz - число границ по z, L - кол-во подобластей
 vector<double> Xw, Yw, Zw; // границы области

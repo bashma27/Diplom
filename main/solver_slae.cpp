@@ -1,11 +1,4 @@
-#include <iostream>
-#include <vector>
-#include <iomanip>
-
-using namespace std;
-
-extern vector<int> ia, ja;
-extern vector<double> aal, di, b, L_sq, di_sq;
+#include "solver_slae.h"
 
 namespace MSG {
     double ScalarMult(vector<double>& first_vec, vector<double>& second_vec, int n) {

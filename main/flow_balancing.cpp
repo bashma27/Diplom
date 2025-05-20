@@ -577,15 +577,20 @@ double CalcSumNonBalance() { // рассчитать суммарный небаланс
     double res = 0;
     int start_face = 0;
     int num_face_layer = faces_flow_value.size() / NUM_SPLIT_Z; // кол-во ребер в слое (в плоскости xy в одном разбиении по z)
+    int curr_el = 0;
     for (int i = 0; i < NUM_SPLIT_Z; i++) {
         for (int j = 0; j < NUM_SPLIT_Y; j++) {
             for (int k = 0; k < NUM_SPLIT_X; k++) {
-                int curr_el = i * NUM_SPLIT_X * NUM_SPLIT_Y + j * NUM_SPLIT_Y + k;
 
                 if (IsFictEl(curr_el))
                     continue;
 
                 int S_g_1, S_g_2, S_g_3, S_g_4;
+                int g_1, g_2, g_3, g_4;
+                g_1 = start_face + k;
+                g_2 = start_face + k + NUM_SPLIT_X;
+                g_3 = start_face + k + NUM_SPLIT_X + 1;
+                g_4 = start_face + k + 2 * NUM_SPLIT_X + 1;
                 S_g_1 = (faces_flow_value[start_face + k] < 0) ? 1 : -1;
                 S_g_2 = (faces_flow_value[start_face + k + NUM_SPLIT_X] < 0) ? 1 : -1;
                 S_g_3 = (faces_flow_value[start_face + k + NUM_SPLIT_X + 1] < 0) ? -1 : 1;
@@ -593,6 +598,7 @@ double CalcSumNonBalance() { // рассчитать суммарный небаланс
                 double a = S_g_1 * fabs(faces_flow_value[start_face + k]) + S_g_2 * fabs(faces_flow_value[start_face + k + NUM_SPLIT_X]) +
                     S_g_3 * fabs(faces_flow_value[start_face + k + NUM_SPLIT_X + 1]) + S_g_4 * fabs(faces_flow_value[start_face + k + 2 * NUM_SPLIT_X + 1]);
                 res += a;
+                curr_el++;
             }
             start_face += 2 * NUM_SPLIT_X + 1;
         }

@@ -275,83 +275,83 @@ void AddLocalVecBound(int num_face_2_zp, vector<double>& vec) { // добавление ве
 void GenFirstBoundCondit() { // создание массива с первыми краевыми условиями
     int start_nodes = 0;
     int offset = 0;
-    for (int i = 0; i < NUM_SPLIT_X * NUM_SPLIT_Z; i++) {
-        face_1.insert(offset + start_nodes);
-        face_1.insert(offset + start_nodes + 1);
-        face_1.insert(offset + start_nodes + 2);
+    for (int i = 0; i < NUM_SPLIT_Z; i++) {
+        for (int j = 0; j < NUM_SPLIT_X; j++) {
+            face_1.insert(offset + start_nodes);
+            face_1.insert(offset + start_nodes + 1);
+            face_1.insert(offset + start_nodes + 2);
 
-        face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y);
-        face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + 1);
-        face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + 2);
+            face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y);
+            face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + 1);
+            face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + 2);
 
-        face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y);
-        face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + 1);
-        face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + 2);
-        start_nodes += 2;
-        if ((i + 1) % NUM_SPLIT_X == 0) {
-            start_nodes = 0;
-            offset += 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y;
+            face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y);
+            face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + 1);
+            face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + 2);
+            start_nodes += 2;
         }
+        start_nodes = 0;
+        offset += 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y;
     }
     start_nodes = NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y - NUM_NODES_IN_EDGE_X;
     offset = 0;
-    for (int i = NUM_SPLIT_X * NUM_SPLIT_Z; i < 2 * NUM_SPLIT_X * NUM_SPLIT_Z; i++) {
-        face_1.insert(offset + start_nodes);
-        face_1.insert(offset + start_nodes + 1);
-        face_1.insert(offset + start_nodes + 2);
+    for (int i = 0; i < NUM_SPLIT_Z; i++) {
+        for (int j = 0; j < NUM_SPLIT_X; j++) {
+            face_1.insert(offset + start_nodes);
+            face_1.insert(offset + start_nodes + 1);
+            face_1.insert(offset + start_nodes + 2);
 
-        face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y);
-        face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + 1);
-        face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + 2);
+            face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y);
+            face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + 1);
+            face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + 2);
 
-        face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y);
-        face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + 1);
-        face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + 2);
-        start_nodes += 2;
-        if ((i + 1) % NUM_SPLIT_X == 0) {
-            start_nodes = NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y - NUM_NODES_IN_EDGE_X;
-            offset += 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y;
+            face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y);
+            face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + 1);
+            face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + 2);
+            start_nodes += 2;
         }
+        start_nodes = NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y - NUM_NODES_IN_EDGE_X;
+        offset += 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y;
     }
     start_nodes = 0;
     offset = 0;
-    for (int i = 2 * NUM_SPLIT_X * NUM_SPLIT_Z; i < 2 * NUM_SPLIT_X * NUM_SPLIT_Z + NUM_SPLIT_Y * NUM_SPLIT_Z; i++) {
-        face_1.insert(offset + start_nodes);
-        face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X);
-        face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X);
+    for (int i = 0; i < NUM_SPLIT_Z; i++) {
+        for (int j = 0; j < NUM_SPLIT_Y; j++) {
+            face_1.insert(offset + start_nodes);
+            face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X);
+            face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X);
 
-        face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y);
-        face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + NUM_NODES_IN_EDGE_X);
-        face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + 2 * NUM_NODES_IN_EDGE_X);
+            face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y);
+            face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + NUM_NODES_IN_EDGE_X);
+            face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + 2 * NUM_NODES_IN_EDGE_X);
 
-        face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y);
-        face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + NUM_NODES_IN_EDGE_X);
-        face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + 2 * NUM_NODES_IN_EDGE_X);
-        start_nodes += 2 * NUM_NODES_IN_EDGE_X;
-        if ((i + 1) % NUM_SPLIT_Y == 0) {
-            start_nodes = 0;
-            offset += 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y;
+            face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y);
+            face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + NUM_NODES_IN_EDGE_X);
+            face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + 2 * NUM_NODES_IN_EDGE_X);
+            start_nodes += 2 * NUM_NODES_IN_EDGE_X;
         }
+        start_nodes = 0;
+        offset += 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y;
     }
     start_nodes = NUM_NODES_IN_EDGE_X - 1;
     offset = 0;
-    for (int i = 2 * NUM_SPLIT_X * NUM_SPLIT_Z + NUM_SPLIT_Y * NUM_SPLIT_Z; i < 2 * NUM_SPLIT_X * NUM_SPLIT_Z + 2 * NUM_SPLIT_Y * NUM_SPLIT_Z; i++) {
-        face_1.insert(offset + start_nodes);
-        face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X);
-        face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X);
+    for (int i = 0; i < NUM_SPLIT_Z; i++) {
+        for (int j = 0; j < NUM_SPLIT_Y; j++) {
+            face_1.insert(offset + start_nodes);
+            face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X);
+            face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X);
 
-        face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y);
-        face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + NUM_NODES_IN_EDGE_X);
-        face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + 2 * NUM_NODES_IN_EDGE_X);
+            face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y);
+            face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + NUM_NODES_IN_EDGE_X);
+            face_1.insert(offset + start_nodes + NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + 2 * NUM_NODES_IN_EDGE_X);
 
-        face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y);
-        face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + NUM_NODES_IN_EDGE_X);
-        face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + 2 * NUM_NODES_IN_EDGE_X);
-        start_nodes += 2 * NUM_NODES_IN_EDGE_X;
-        if ((i + 1) % NUM_SPLIT_Y == 0) {
-            start_nodes = NUM_NODES_IN_EDGE_X - 1;
-            offset += 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y;
+            face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y);
+            face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + NUM_NODES_IN_EDGE_X);
+            face_1.insert(offset + start_nodes + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y + 2 * NUM_NODES_IN_EDGE_X);
+            start_nodes += 2 * NUM_NODES_IN_EDGE_X;
         }
+        start_nodes = NUM_NODES_IN_EDGE_X - 1;
+        offset += 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y;
     }
 }
 

@@ -131,6 +131,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="cell_state_recalc.cpp" />
     <ClCompile Include="fem.cpp" />
     <ClCompile Include="flow_balancing.cpp" />
     <ClCompile Include="gener_calc_area.cpp" />
@@ -140,6 +141,7 @@
     <ClCompile Include="solver_slae.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cell_state_recalc.h" />
     <ClInclude Include="fem.h" />
     <ClInclude Include="flow_balancing.h" />
     <ClInclude Include="gener_calc_area.h" />

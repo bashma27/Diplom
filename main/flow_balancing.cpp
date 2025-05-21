@@ -99,12 +99,13 @@ void GenFacesFlowValue() { // генерация граней со значением потока
     // порядок заполнения: 
     // сначала грани по y, потом по x (слева - направо; от ближайшей до дальней (если смотреть в сечении xy то снизу вверх)), потом вверх по z
     // (потоки по верхней и нижней z известны и не нужна фактически, а внутренние потоки по z практически нулевые - можно не учитывать (скважина полностью проходит по глубине z))
-
+    faces_flow_ph_value.resize(num_ph);
     vector<int> node_num(27); int num_sub;
-    vector<int> el_for_face; // конечный элемент, соответствующий грани
     bool left = true;
     bool face_y = true;
     int start_el = 0;
+    double sum, _sum;
+    vector<double> s;
 
     for (int i = 0; i < NUM_SPLIT_Z; i++) {
 
@@ -113,7 +114,14 @@ void GenFacesFlowValue() { // генерация граней со значением потока
             node_num = array_p[start_el + j].second;
             num_sub = array_p[start_el + j].first;
             faces_flow_value.push_back(-CalcFlowFaceXZ(node_num, num_sub, -1));
-            el_for_face.push_back(start_el + j);
+
+            sum = 0.;
+            for (int i = 0; i < num_ph; i++) {
+                sum += k_ph[num_sub][i] / eta_ph[i];
+            }
+            for (int ph = 0; ph < num_ph; ph++) {
+                faces_flow_ph_value[ph].push_back(faces_flow_value.back() * k_ph[num_sub][ph] / (eta_ph[ph] * sum));
+            }
         }
         //самая передняя грань по y
 
@@ -121,7 +129,14 @@ void GenFacesFlowValue() { // генерация граней со значением потока
         node_num = array_p[start_el].second;
         num_sub = array_p[start_el].first;
         faces_flow_value.push_back(-CalcFlowFaceYZ(node_num, num_sub, -1));
-        el_for_face.push_back(start_el);
+
+        sum = 0.;
+        for (int i = 0; i < num_ph; i++) {
+            sum += k_ph[num_sub][i] / eta_ph[i];
+        }
+        for (int ph = 0; ph < num_ph; ph++) {
+            faces_flow_ph_value[ph].push_back(faces_flow_value.back() * k_ph[num_sub][ph] / (eta_ph[ph] * sum));           
+        }
         //самая левая грань по x
 
         //внутренние грани по x
@@ -139,7 +154,21 @@ void GenFacesFlowValue() { // генерация граней со значением потока
 
             double res = (right_V_left_el * lambda_right_el - left_V_right_el * lambda_left_el) / (lambda_right_el + lambda_left_el);
             faces_flow_value.push_back(res);
-            el_for_face.push_back(start_el + j);
+
+            int S_g = (faces_flow_value.back() < 0) ? -1 : 1;
+
+            if(S_g < 0)
+                num_sub = array_p[start_el + j + 1].first;
+            else
+                num_sub = array_p[start_el + j].first;
+
+            sum = 0.;
+            for (int i = 0; i < num_ph; i++) {
+                sum += k_ph[num_sub][i] / eta_ph[i];
+            }
+            for (int ph = 0; ph < num_ph; ph++) {
+                faces_flow_ph_value[ph].push_back(faces_flow_value.back() * k_ph[num_sub][ph] / (eta_ph[ph] * sum));               
+            }
         }
         //внутренние грани по x
 
@@ -147,7 +176,14 @@ void GenFacesFlowValue() { // генерация граней со значением потока
         node_num = array_p[start_el + NUM_SPLIT_X - 1].second;
         num_sub = array_p[start_el + NUM_SPLIT_X - 1].first;
         faces_flow_value.push_back(CalcFlowFaceYZ(node_num, num_sub, 1));
-        el_for_face.push_back(start_el + NUM_SPLIT_X - 1);
+
+        sum = 0.;
+        for (int i = 0; i < num_ph; i++) {
+            sum += k_ph[num_sub][i] / eta_ph[i];
+        }
+        for (int ph = 0; ph < num_ph; ph++) {
+            faces_flow_ph_value[ph].push_back(faces_flow_value.back() * k_ph[num_sub][ph] / (eta_ph[ph] * sum));          
+        }
         //самая правая грань по x
 
         start_el += NUM_SPLIT_X;
@@ -167,6 +203,16 @@ void GenFacesFlowValue() { // генерация граней со значением потока
                     _face_2_zp[6] = node_num[18]; _face_2_zp[7] = node_num[19]; _face_2_zp[8] = node_num[20];
                     int num_face_2_zp = GetNumFace2ZP(_face_2_zp);
                     faces_flow_value.push_back(-SpecFlow(num_face_2_zp));
+
+                    num_sub = array_p[start_el + k - NUM_SPLIT_X].first;
+                    sum = 0.;
+                    for (int i = 0; i < num_ph; i++) {
+                        sum += k_ph[num_sub][i] / eta_ph[i];
+                    }
+                    for (int ph = 0; ph < num_ph; ph++) {
+                        faces_flow_ph_value[ph].push_back(faces_flow_value.back() * k_ph[num_sub][ph] / (eta_ph[ph] * sum));
+                    }
+
                     num_faces_zp.push_back({ faces_flow_value.size() - 1 , 0 });
                     num_face_2_zp++;
                 }
@@ -178,11 +224,28 @@ void GenFacesFlowValue() { // генерация граней со значением потока
                     _face_2_zp[6] = node_num[18]; _face_2_zp[7] = node_num[19]; _face_2_zp[8] = node_num[20];
                     int num_face_2_zp = GetNumFace2ZP(_face_2_zp);
                     faces_flow_value.push_back(SpecFlow(num_face_2_zp));
+
+                    num_sub = array_p[start_el + k].first;
+                    sum = 0.;
+                    for (int i = 0; i < num_ph; i++) {
+                        sum += k_ph[num_sub][i] / eta_ph[i];
+                    }
+                    _sum = 0.;
+                    for (int ph = 0; ph < num_ph; ph++) {
+                        faces_flow_ph_value[ph].push_back(faces_flow_value.back() * k_ph[num_sub][ph] / (eta_ph[ph] * sum));
+                        _sum += faces_flow_ph_value[ph].back();
+                    }
+                    s.push_back(_sum);
+
                     num_faces_zp.push_back({ faces_flow_value.size() - 1 , 1 });
                     num_face_2_zp++;
                 }
                 else if (IsFictEl(start_el + k) && IsFictEl(start_el + k - NUM_SPLIT_X)) {
                     faces_flow_value.push_back(0);
+
+                    for (int ph = 0; ph < num_ph; ph++) {
+                        faces_flow_ph_value[ph].push_back(0.);
+                    }
                     fict_faces.push_back(faces_flow_value.size() - 1);
                 }
                 else {
@@ -199,7 +262,21 @@ void GenFacesFlowValue() { // генерация граней со значением потока
 
                     double res = (back_V_front_el * lambda_back_el - front_V_back_el * lambda_front_el) / (lambda_back_el + lambda_front_el);
                     faces_flow_value.push_back(res);
-                    el_for_face.push_back(start_el + k);
+
+                    int S_g = (faces_flow_value.back() < 0) ? -1 : 1;
+
+                    if (S_g < 0)
+                        num_sub = array_p[start_el + k].first;
+                    else
+                        num_sub = array_p[start_el + k - NUM_SPLIT_X].first;
+
+                    sum = 0.;
+                    for (int i = 0; i < num_ph; i++) {
+                        sum += k_ph[num_sub][i] / eta_ph[i];
+                    }
+                    for (int ph = 0; ph < num_ph; ph++) {
+                        faces_flow_ph_value[ph].push_back(faces_flow_value.back() * k_ph[num_sub][ph] / (eta_ph[ph] * sum));
+                    }
                 }
             }
             //внутренние грани по y
@@ -208,7 +285,14 @@ void GenFacesFlowValue() { // генерация граней со значением потока
             node_num = array_p[start_el].second;
             num_sub = array_p[start_el].first;
             faces_flow_value.push_back(-CalcFlowFaceYZ(node_num, num_sub, -1));
-            el_for_face.push_back(start_el);
+
+            sum = 0.;
+            for (int i = 0; i < num_ph; i++) {
+                sum += k_ph[num_sub][i] / eta_ph[i];
+            }
+            for (int ph = 0; ph < num_ph; ph++) {
+                faces_flow_ph_value[ph].push_back(faces_flow_value.back() * k_ph[num_sub][ph] / (eta_ph[ph] * sum));
+            }
             //самая левая грань по x
 
             //внутренние грани по x
@@ -221,6 +305,15 @@ void GenFacesFlowValue() { // генерация граней со значением потока
                     _face_2_zp[6] = node_num[20]; _face_2_zp[7] = node_num[23]; _face_2_zp[8] = node_num[26];
                     int num_face_2_zp = GetNumFace2ZP(_face_2_zp);
                     faces_flow_value.push_back(-SpecFlow(num_face_2_zp));
+
+                    num_sub = array_p[start_el + k].first;
+                    sum = 0.;
+                    for (int i = 0; i < num_ph; i++) {
+                        sum += k_ph[num_sub][i] / eta_ph[i];
+                    }
+                    for (int ph = 0; ph < num_ph; ph++) {
+                        faces_flow_ph_value[ph].push_back(faces_flow_value.back() * k_ph[num_sub][ph] / (eta_ph[ph] * sum));
+                    }
                     num_faces_zp.push_back({ faces_flow_value.size() - 1 , 2 });
                     num_face_2_zp++;
                 }
@@ -232,11 +325,24 @@ void GenFacesFlowValue() { // генерация граней со значением потока
                     _face_2_zp[6] = node_num[20]; _face_2_zp[7] = node_num[23]; _face_2_zp[8] = node_num[26];
                     int num_face_2_zp = GetNumFace2ZP(_face_2_zp);
                     faces_flow_value.push_back(SpecFlow(num_face_2_zp));
+
+                    num_sub = array_p[start_el + k + 1].first;
+                    sum = 0.;
+                    for (int i = 0; i < num_ph; i++) {
+                        sum += k_ph[num_sub][i] / eta_ph[i];
+                    }
+                    for (int ph = 0; ph < num_ph; ph++) {
+                        faces_flow_ph_value[ph].push_back(faces_flow_value.back() * k_ph[num_sub][ph] / (eta_ph[ph] * sum));
+                    }                 
                     num_faces_zp.push_back({ faces_flow_value.size() - 1 , 3 });
                     num_face_2_zp++;
                 }
                 else if (IsFictEl(start_el + k) && IsFictEl(start_el + k + 1)) {
                     faces_flow_value.push_back(0);
+
+                    for (int ph = 0; ph < num_ph; ph++) {
+                        faces_flow_ph_value[ph].push_back(0.);
+                    }
                     fict_faces.push_back(faces_flow_value.size() - 1);
                 }
                 else {
@@ -253,7 +359,21 @@ void GenFacesFlowValue() { // генерация граней со значением потока
 
                     double res = (right_V_left_el * lambda_right_el - left_V_right_el * lambda_left_el) / (lambda_right_el + lambda_left_el);
                     faces_flow_value.push_back(res);
-                    el_for_face.push_back(start_el + k);
+
+                    int S_g = (faces_flow_value.back() < 0) ? -1 : 1;
+
+                    if (S_g < 0)
+                        num_sub = array_p[start_el + k + 1].first;
+                    else
+                        num_sub = array_p[start_el + k].first;
+
+                    sum = 0.;
+                    for (int i = 0; i < num_ph; i++) {
+                        sum += k_ph[num_sub][i] / eta_ph[i];
+                    }
+                    for (int ph = 0; ph < num_ph; ph++) {
+                        faces_flow_ph_value[ph].push_back(faces_flow_value.back() * k_ph[num_sub][ph] / (eta_ph[ph] * sum));
+                    }
                 }
             }
             //внутренние грани по x
@@ -262,7 +382,14 @@ void GenFacesFlowValue() { // генерация граней со значением потока
             node_num = array_p[start_el + NUM_SPLIT_X - 1].second;
             num_sub = array_p[start_el + NUM_SPLIT_X - 1].first;
             faces_flow_value.push_back(CalcFlowFaceYZ(node_num, num_sub, 1));
-            el_for_face.push_back(start_el + NUM_SPLIT_X - 1);
+
+            sum = 0.;
+            for (int i = 0; i < num_ph; i++) {
+                sum += k_ph[num_sub][i] / eta_ph[i];
+            }
+            for (int ph = 0; ph < num_ph; ph++) {
+                faces_flow_ph_value[ph].push_back(faces_flow_value.back() * k_ph[num_sub][ph] / (eta_ph[ph] * sum));
+            }
             //самая правая грань по x
 
             if (j == NUM_SPLIT_Y - 1) continue;
@@ -275,7 +402,14 @@ void GenFacesFlowValue() { // генерация граней со значением потока
             node_num = array_p[start_el + j].second;
             num_sub = array_p[start_el + j].first;
             faces_flow_value.push_back(CalcFlowFaceXZ(node_num, num_sub, 1));
-            el_for_face.push_back(start_el + j);
+
+            sum = 0.;
+            for (int i = 0; i < num_ph; i++) {
+                sum += k_ph[num_sub][i] / eta_ph[i];
+            }
+            for (int ph = 0; ph < num_ph; ph++) {
+                faces_flow_ph_value[ph].push_back(faces_flow_value.back() * k_ph[num_sub][ph] / (eta_ph[ph] * sum));
+            }
         }
         //самая дальняя грань по y
 
@@ -576,15 +710,16 @@ void ConsiderFlows() { // учет всех краевых
 double CalcSumNonBalance() { // рассчитать суммарный небаланс
     double res = 0;
     int start_face = 0;
-    int num_face_layer = faces_flow_value.size() / NUM_SPLIT_Z; // кол-во ребер в слое (в плоскости xy в одном разбиении по z)
     int curr_el = 0;
     for (int i = 0; i < NUM_SPLIT_Z; i++) {
         for (int j = 0; j < NUM_SPLIT_Y; j++) {
             for (int k = 0; k < NUM_SPLIT_X; k++) {
 
-                if (IsFictEl(curr_el))
+                if (IsFictEl(curr_el)) {
+                    curr_el++;
                     continue;
-
+                }
+                    
                 int S_g_1, S_g_2, S_g_3, S_g_4;
                 int g_1, g_2, g_3, g_4;
                 g_1 = start_face + k;

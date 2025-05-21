@@ -1,7 +1,8 @@
-﻿#include "solver_slae.h"
+﻿#include "globals.h"
+#include "solver_slae.h"
 #include "gener_calc_area.h"
-#include "globals.h"
 #include "flow_balancing.h"
+#include "cell_state_recalc.h"
 
 int main()
 {
@@ -30,6 +31,7 @@ int main()
     MSG::LU_sq_MSG(q, r, z, Az, Mult, NUM_NODES, eps, max_iter);
     GenArrayFictEndEl();
     BalancingFlows();
+    RecalcCellState();
 
     /*GenFictNodes();
     Test();*/

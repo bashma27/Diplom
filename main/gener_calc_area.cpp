@@ -162,7 +162,7 @@ int Input_coef() {
 
     ifstream File2("ph.txt");
     if (!File2.is_open()) return 1;
-    File2 >> num_ph;
+    File2 >> num_ph >> F;
     k_ph.assign(L, vector<double>(num_ph));
     eta_ph.resize(num_ph);
     for (int i = 0; i < num_ph; i++) {

@@ -8,7 +8,7 @@ int NUM_SPLIT_X = 0, NUM_SPLIT_Y = 0, NUM_SPLIT_Z = 0;
 int NUM_NODES_IN_EDGE_X = 0, NUM_NODES_IN_EDGE_Y = 0, NUM_NODES_IN_EDGE_Z = 0, NUM_NODES = 0;
 int num_ph = 0;
 
-double EPS = 1e-300;
+double EPS = 1e-300, F = 0;
 
 vector<vector<double>> G = {
     {7., -8., 1.},
@@ -34,8 +34,11 @@ vector<int> ident_fict;
 vector<int> i_ident_fict;
 vector<int> fict_nodes;
 vector<double> faces_flow_value;
+vector<vector<double>> faces_flow_ph_value;
 vector<pair<int, int>> num_faces_zp;
 vector<int> fict_faces;
 vector<int> fict_el;
 vector<double> q_flow;
 vector<vector<int>> list_face;
+vector<int> el_for_face;
+vector<vector<double>> satur;

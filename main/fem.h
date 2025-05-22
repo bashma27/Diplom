@@ -14,6 +14,7 @@ bool IsFindFictFace(int num_face); // нахождение грани в массиве фиктивных гране
 
 #pragma region Функции краевых условий, их функций и вектора правой части f
 double u_g(double x, double y, double z); // краевое условие первого рода
+double k_ph(int num_el, int num_ph); // множитель структурной проницаемости
 double lambda(int num_sub); // расчет лямбды как итогового коэфиициента
 double theta(int num_face_2_zp); // вычисление тетты по заданному потоку
 double SpecFlow(int num_face_2_zp); // заданный поток на нужной грани для зоны перфорации

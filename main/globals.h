@@ -6,12 +6,13 @@ extern vector<vector<Coord2>> zone_perf; // массив зон перфорации
 extern vector<pair<int, vector<double>>> W;
 extern int NUM_ZONE_PERF; // количество зон перфорации
 extern int NUM_SPLIT_X, NUM_SPLIT_Y, NUM_SPLIT_Z; // суммарное количество разбиений по x, y, z
-extern int NUM_NODES_IN_EDGE_X, NUM_NODES_IN_EDGE_Y, NUM_NODES_IN_EDGE_Z, NUM_NODES;
+extern int NUM_NODES_IN_EDGE_X, NUM_NODES_IN_EDGE_Y, NUM_NODES_IN_EDGE_Z, NUM_NODES, NUM_END_EL;
 extern int num_ph; // кол-во фаз
 extern vector<double> set_flow_zp; // заданный поток зон перфорации
 extern vector<int> ia, ja, choice;
 extern vector<double> aal, di, b, q, L_sq, di_sq, normal;
-extern vector<vector<double>> k_ph; //массив коэффициентов множителей структурной проницаемости,
+extern vector<vector<double>> S_ph; // значения насыщенности фаз для каждого элемента
+extern vector<vector<double>> S_ph_subarea; // значения насыщенности фаз для подоблостей
 extern vector<double> K, eta_ph; // массивы коэффициентов структурной проницаемости, коэффициентов динамической вязкости соответственно
 extern vector<Coord3> nodes; // узлы сетки, заданные координатами 
 extern unordered_set<int> face_1; // массив с узлами первых краевых
@@ -30,3 +31,4 @@ extern vector<double> q_flow;
 extern vector<vector<int>> list_face; 
 extern vector<int> el_for_face; // конечный элемент, соответствующий грани
 extern vector<vector<double>> satur; // значения насыщенностей для каждого элемента каждой фазы
+extern vector<vector<double>> max_t; // максимальные значения времени для перетоков каждого элемента каждой фазы 

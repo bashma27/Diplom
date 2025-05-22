@@ -142,6 +142,7 @@ int Input_splits() {
     NUM_SPLIT_X = CalcSum_ni(0, 0, Nx - 1);
     NUM_SPLIT_Y = CalcSum_ni(1, 0, Ny - 1);
     NUM_SPLIT_Z = CalcSum_ni(2, 0, Nz - 1);
+    NUM_END_EL = NUM_SPLIT_X * NUM_SPLIT_Y * NUM_SPLIT_Z;
     NUM_NODES_IN_EDGE_X = 2 * CalcSum_ni(0, 0, Nx - 1) + 1;
     NUM_NODES_IN_EDGE_Y = 2 * CalcSum_ni(1, 0, Ny - 1) + 1;
     NUM_NODES_IN_EDGE_Z = 2 * CalcSum_ni(2, 0, Nz - 1) + 1;
@@ -163,14 +164,14 @@ int Input_coef() {
     ifstream File2("ph.txt");
     if (!File2.is_open()) return 1;
     File2 >> num_ph >> F;
-    k_ph.assign(L, vector<double>(num_ph));
+    S_ph_subarea.assign(L, vector<double>(num_ph));
     eta_ph.resize(num_ph);
     for (int i = 0; i < num_ph; i++) {
         File2 >> eta_ph[i];
     }
     for (int i = 0; i < L; i++) {
         for (int j = 0; j < num_ph; j++) {
-            File2 >> k_ph[i][j];
+            File2 >> S_ph_subarea[i][j];
         }
     }
     File2.close();

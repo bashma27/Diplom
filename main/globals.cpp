@@ -5,7 +5,7 @@ vector<pair<int, vector<double>>> W;
 
 int NUM_ZONE_PERF = 0;
 int NUM_SPLIT_X = 0, NUM_SPLIT_Y = 0, NUM_SPLIT_Z = 0;
-int NUM_NODES_IN_EDGE_X = 0, NUM_NODES_IN_EDGE_Y = 0, NUM_NODES_IN_EDGE_Z = 0, NUM_NODES = 0;
+int NUM_NODES_IN_EDGE_X = 0, NUM_NODES_IN_EDGE_Y = 0, NUM_NODES_IN_EDGE_Z = 0, NUM_NODES = 0, NUM_END_EL = 0;
 int num_ph = 0;
 
 double EPS = 1e-300, F = 0;
@@ -24,7 +24,8 @@ vector<vector<double>> M = {
 vector<double> set_flow_zp;
 vector<int> ia, ja, choice;
 vector<double> aal, di, b, q, L_sq, di_sq, normal;
-vector<vector<double>> k_ph;
+vector<vector<double>> S_ph;
+vector<vector<double>> S_ph_subarea;
 vector<double> K, eta_ph;
 vector<Coord3> nodes;
 unordered_set<int> face_1;
@@ -42,3 +43,4 @@ vector<double> q_flow;
 vector<vector<int>> list_face;
 vector<int> el_for_face;
 vector<vector<double>> satur;
+vector<vector<double>> max_t;

@@ -97,12 +97,16 @@ double u_g(double x, double y, double z) { // краевое условие первого рода
     return 130.;
 }
 
-double lambda(int num_sub) { // расчет лямбды как итогового коэфиициента
+double k_ph(int num_el, int num_ph) { // множитель структурной проницаемости
+    return S_ph[num_el][num_ph];
+}
+
+double lambda(int num_el) { // расчет лямбды как итогового коэфиициента
     double res = 0;
-    for (int i = 0; i < num_ph; i++) {
-        res += k_ph[num_sub][i] / eta_ph[i];
+    for (int ph = 0; ph < num_ph; ph++) {
+        res += k_ph(num_el, ph) / eta_ph[ph];
     }
-    res *= K[num_sub];
+    res *= K[array_p[num_el].first];
     return res;
 }
 
@@ -165,7 +169,8 @@ double f(int num_sub, double x, double y) { // функция правой части диф. уравнен
 
 #pragma region Генерация массива конечных элементов и портрета матрицы
 void GenArrayParallelepipeds() { // генерация массива параллелепипедов
-    array_p.resize(NUM_SPLIT_X * NUM_SPLIT_Y * NUM_SPLIT_Z);
+    array_p.resize(NUM_END_EL);
+    S_ph.assign(NUM_END_EL, vector<double>(num_ph, 0.0));
     int j, k;
     k = 0;
     for (int i = 0; i < array_p.size();) {
@@ -202,6 +207,10 @@ void GenArrayParallelepipeds() { // генерация массива параллелепипедов
                 array_p[i + j + l].second.push_back(l_d_node + 1 + 2 * NUM_NODES_IN_EDGE_X + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y);
                 array_p[i + j + l].second.push_back(l_d_node + 2 + 2 * NUM_NODES_IN_EDGE_X + 2 * NUM_NODES_IN_EDGE_X * NUM_NODES_IN_EDGE_Y);
                 array_p[i + j + l].first = GetNumSubarea(array_p[i + j + l].second);
+
+                for (int ph = 0; ph < num_ph; ph++) {
+                    S_ph[i + j + l][ph] = S_ph_subarea[array_p[i + j + l].first][ph];
+                }
             }
             j += NUM_SPLIT_X;
         }
@@ -559,7 +568,7 @@ void ConsiderBoundCondit() { // учет всех краевых
 #pragma endregion
 
 #pragma region Работа с локальными матрицами и векторами
-void CreateLocalMatrStiff(int num_sub, vector<int>& node_num) { // локальная матрица жесткости
+void CreateLocalMatrStiff(int num_el, vector<int>& node_num) { // локальная матрица жесткости
     double h_x, h_y, h_z;
     h_x = nodes[node_num[2]].x - nodes[node_num[0]].x;
     h_y = nodes[node_num[6]].y - nodes[node_num[0]].y;
@@ -570,7 +579,7 @@ void CreateLocalMatrStiff(int num_sub, vector<int>& node_num) { // локальная мат
     }
     for (int i = 0; i < 27; i++) {
         for (int j = 0; j < 27; j++) {
-            loc_matr_stiff[i][j] = lambda(num_sub) *
+            loc_matr_stiff[i][j] = lambda(num_el) *
                 ((h_y * h_z * G[i % 3][j % 3] * M[(i / 3) % 3][(j / 3) % 3] * M[i / 9][j / 9]) / (2700.0 * h_x) +
                     (h_x * h_z * M[i % 3][j % 3] * G[(i / 3) % 3][(j / 3) % 3] * M[i / 9][j / 9]) / (2700.0 * h_y) +
                     (h_x * h_y * M[i % 3][j % 3] * M[(i / 3) % 3][(j / 3) % 3] * G[i / 9][j / 9]) / (2700.0 * h_z));
@@ -607,7 +616,7 @@ void BuildMatrVec() { // построить глобальную матрицу и вектор
             node_num[j] = array_p[i].second[j];
         }
         int num_sub = array_p[i].first;
-        CreateLocalMatrStiff(num_sub, node_num);
+        CreateLocalMatrStiff(i, node_num);
         CreateLocalVec(num_sub, node_num);
     }
 }

@@ -44,3 +44,6 @@ vector<vector<int>> list_face;
 vector<int> el_for_face;
 vector<vector<double>> satur;
 vector<vector<double>> max_t;
+vector<double> max_t_mixture;
+vector<double> pore_V;
+vector<double> sum_V_ph;

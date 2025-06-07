@@ -7,7 +7,9 @@ void CalcFlowPh() { // расчитать потоки для каждоый фазы в отдельности
     // сначала грани по y, потом по x (слева - направо; от ближайшей до дальней (если смотреть в сечении xy то снизу вверх)), потом вверх по z
     // (потоки по верхней и нижней z известны и не нужна фактически, а внутренние потоки по z практически нулевые - можно не учитывать (скважина полностью проходит по глубине z))
     faces_flow_ph_value.assign(faces_flow_value.size(), vector<double>(num_ph));
+    vector<int> node_num(27);
     int num_sub;
+    int num_pos_flow = 0;
     int start_el = 0;
     int num_flow = 0;
     double sum;
@@ -80,6 +82,20 @@ void CalcFlowPh() { // расчитать потоки для каждоый фазы в отдельности
             for (int k = 0; k < NUM_SPLIT_X; k++) {
 
                 if (IsFictEl(start_el + k) && !IsFictEl(start_el + k - NUM_SPLIT_X)) {
+                    if (faces_flow_value[num_flow] < -EPS) {
+                        node_num = array_p[start_el + k].second;
+                        vector<int> _face_2_zp(9);
+                        _face_2_zp[0] = node_num[0]; _face_2_zp[1] = node_num[1]; _face_2_zp[2] = node_num[2];
+                        _face_2_zp[3] = node_num[9]; _face_2_zp[4] = node_num[10]; _face_2_zp[5] = node_num[11];
+                        _face_2_zp[6] = node_num[18]; _face_2_zp[7] = node_num[19]; _face_2_zp[8] = node_num[20];
+                        int num_face_2_zp = GetNumFace2ZP(_face_2_zp);
+                        int num_pos_flow = GetNumPosFlowFromAllSetFlows(face_2_zp[num_face_2_zp].second[10]);
+                        for (int ph = 0; ph < num_ph; ph++) {
+                            faces_flow_ph_value[num_flow][ph] = faces_flow_value[num_flow] * satur_pos_set_flow[num_pos_flow][ph];
+                        }                   
+                        num_flow++;
+                        continue;
+                    }
                     num_sub = array_p[start_el + k - NUM_SPLIT_X].first;
                     sum = 0.;
                     for (int ph = 0; ph < num_ph; ph++) {
@@ -91,6 +107,20 @@ void CalcFlowPh() { // расчитать потоки для каждоый фазы в отдельности
                     num_flow++;
                 }
                 else if (!IsFictEl(start_el + k) && IsFictEl(start_el + k - NUM_SPLIT_X)) {
+                    if (faces_flow_value[num_flow] > EPS) {
+                        node_num = array_p[start_el + k].second;
+                        vector<int> _face_2_zp(9);
+                        _face_2_zp[0] = node_num[0]; _face_2_zp[1] = node_num[1]; _face_2_zp[2] = node_num[2];
+                        _face_2_zp[3] = node_num[9]; _face_2_zp[4] = node_num[10]; _face_2_zp[5] = node_num[11];
+                        _face_2_zp[6] = node_num[18]; _face_2_zp[7] = node_num[19]; _face_2_zp[8] = node_num[20];
+                        int num_face_2_zp = GetNumFace2ZP(_face_2_zp);
+                        int num_pos_flow = GetNumPosFlowFromAllSetFlows(face_2_zp[num_face_2_zp].second[10]);
+                        for (int ph = 0; ph < num_ph; ph++) {
+                            faces_flow_ph_value[num_flow][ph] = faces_flow_value[num_flow] * satur_pos_set_flow[num_pos_flow][ph];
+                        }
+                        num_flow++;
+                        continue;
+                    }
                     num_sub = array_p[start_el + k].first;
                     sum = 0.;
                     for (int ph = 0; ph < num_ph; ph++) {
@@ -138,6 +168,20 @@ void CalcFlowPh() { // расчитать потоки для каждоый фазы в отдельности
             //внутренние грани по x
             for (int k = 0; k < NUM_SPLIT_X - 1; k++) {
                 if (!IsFictEl(start_el + k) && IsFictEl(start_el + k + 1)) {
+                    if (faces_flow_value[num_flow] < -EPS) {
+                        node_num = array_p[start_el + k].second;
+                        vector<int> _face_2_zp(9);
+                        _face_2_zp[0] = node_num[2]; _face_2_zp[1] = node_num[5]; _face_2_zp[2] = node_num[8];
+                        _face_2_zp[3] = node_num[11]; _face_2_zp[4] = node_num[14]; _face_2_zp[5] = node_num[17];
+                        _face_2_zp[6] = node_num[20]; _face_2_zp[7] = node_num[23]; _face_2_zp[8] = node_num[26];
+                        int num_face_2_zp = GetNumFace2ZP(_face_2_zp);
+                        int num_pos_flow = GetNumPosFlowFromAllSetFlows(face_2_zp[num_face_2_zp].second[10]);
+                        for (int ph = 0; ph < num_ph; ph++) {
+                            faces_flow_ph_value[num_flow][ph] = faces_flow_value[num_flow] * satur_pos_set_flow[num_pos_flow][ph];
+                        }
+                        num_flow++;
+                        continue;
+                    }
                     num_sub = array_p[start_el + k].first;
                     sum = 0.;
                     for (int ph = 0; ph < num_ph; ph++) {
@@ -149,6 +193,20 @@ void CalcFlowPh() { // расчитать потоки для каждоый фазы в отдельности
                     num_flow++;
                 }
                 else if (IsFictEl(start_el + k) && !IsFictEl(start_el + k + 1)) {
+                    if (faces_flow_value[num_flow] > EPS) {
+                        node_num = array_p[start_el + k].second;
+                        vector<int> _face_2_zp(9);
+                        _face_2_zp[0] = node_num[2]; _face_2_zp[1] = node_num[5]; _face_2_zp[2] = node_num[8];
+                        _face_2_zp[3] = node_num[11]; _face_2_zp[4] = node_num[14]; _face_2_zp[5] = node_num[17];
+                        _face_2_zp[6] = node_num[20]; _face_2_zp[7] = node_num[23]; _face_2_zp[8] = node_num[26];
+                        int num_face_2_zp = GetNumFace2ZP(_face_2_zp);
+                        int num_pos_flow = GetNumPosFlowFromAllSetFlows(face_2_zp[num_face_2_zp].second[10]);
+                        for (int ph = 0; ph < num_ph; ph++) {
+                            faces_flow_ph_value[num_flow][ph] = faces_flow_value[num_flow] * satur_pos_set_flow[num_pos_flow][ph];
+                        }
+                        num_flow++;
+                        continue;
+                    }
                     num_sub = array_p[start_el + k + 1].first;
                     sum = 0.;
                     for (int ph = 0; ph < num_ph; ph++) {
@@ -258,7 +316,7 @@ void RecalcFlowPh(double min_t) { // регулировка потоков для минимального шага п
                         int num_sub = array_p[curr_el].first;
                         mes_el = h_x * h_y * h_z;
 
-                        nec_sum = mes_el * F * k_ph(curr_el, ph) / min_t;
+                        nec_sum = mes_el * F * S_ph[curr_el][ph] / min_t;
                         double diff_sum = fabs(nec_sum - sum);
 
                         if (ph == 0) {
@@ -357,7 +415,7 @@ double MaxDeltaT() { //максимальный шаг по времени (учитывая каждую фазу, каждый
                     int num_sub = array_p[curr_el].first;
                     mes_el = h_x * h_y * h_z;
 
-                    h_t = mes_el * F * k_ph(curr_el, ph) / sum;
+                    h_t = mes_el * F * S_ph[curr_el][ph] / sum;
                     max_t[curr_el][ph] = h_t;
 
                     if (h_t < max_h_t)
@@ -480,7 +538,7 @@ void CalcNewFlowAndSatur(double h_t) { // расчитать новые потоки на элементах и 
                     int num_sub = array_p[curr_el].first;
                     mes_el = h_x * h_y * h_z;
 
-                    sum += mes_el * F * k_ph(curr_el, ph);
+                    sum += mes_el * F * S_ph[curr_el][ph];
 
                     S_ph[curr_el][ph] = sum / (mes_el * F);
 
@@ -490,62 +548,6 @@ void CalcNewFlowAndSatur(double h_t) { // расчитать новые потоки на элементах и 
             }
             start_face += NUM_SPLIT_X;
         }
-    }
-}
-#pragma endregion
-
-#pragma region Подсчет суммарного объема фаз и порового объема
-void CalcSumVPhAndPoreV(double max_h_t) { // расчитать суммарный объем фаз и поровый объем
-    sum_V_ph.resize(NUM_END_EL);
-    pore_V.resize(NUM_END_EL);
-    int start_face = 0;
-    int curr_el = 0;
-    double mes_el = 0;
-    double h_x, h_y, h_z;
-    for (int i = 0; i < NUM_SPLIT_Z; i++) {
-        for (int j = 0; j < NUM_SPLIT_Y; j++) {
-            for (int k = 0; k < NUM_SPLIT_X; k++) {
-
-                if (IsFictEl(curr_el)) {
-                    curr_el++;
-                    continue;
-                }
-
-                double sum = 0;
-                auto node_num = array_p[curr_el].second;
-
-                h_x = nodes[node_num[2]].x - nodes[node_num[0]].x;
-                h_y = nodes[node_num[6]].y - nodes[node_num[0]].y;
-                h_z = nodes[node_num[18]].z - nodes[node_num[0]].z;
-
-                int num_sub = array_p[curr_el].first;
-                mes_el = h_x * h_y * h_z;
-                pore_V[curr_el] = mes_el * F;
-
-
-                sum = 0;
-                for (int ph = 0; ph < num_ph; ph++) {
-                    int S_g_1, S_g_2, S_g_3, S_g_4;
-                    S_g_1 = (faces_flow_ph_value[start_face + k][ph] < 0) ? 1 : -1;
-                    S_g_2 = (faces_flow_ph_value[start_face + k + NUM_SPLIT_X][ph] < 0) ? 1 : -1;
-                    S_g_3 = (faces_flow_ph_value[start_face + k + NUM_SPLIT_X + 1][ph] < 0) ? -1 : 1;
-                    S_g_4 = (faces_flow_ph_value[start_face + k + 2 * NUM_SPLIT_X + 1][ph] < 0) ? -1 : 1;
-
-                    if (S_g_1 > 0)
-                        sum += fabs(faces_flow_ph_value[start_face + k][ph]) * max_h_t;
-                    if (S_g_2 > 0)
-                        sum += fabs(faces_flow_ph_value[start_face + k + NUM_SPLIT_X][ph]) * max_h_t;
-                    if (S_g_3 > 0)
-                        sum += fabs(faces_flow_ph_value[start_face + k + NUM_SPLIT_X + 1][ph]) * max_h_t;
-                    if (S_g_4 > 0)
-                        sum += fabs(faces_flow_ph_value[start_face + k + 2 * NUM_SPLIT_X + 1][ph]) * max_h_t;
-                }
-                sum_V_ph[curr_el] = sum;
-                curr_el++;
-            }
-            start_face += 2 * NUM_SPLIT_X + 1;
-        }
-        start_face += NUM_SPLIT_X;
     }
 }
 #pragma endregion
@@ -563,8 +565,8 @@ void RecalcCellState() { // пересчитать состояние ячеек
         CalcFlowPh();
         cout << S_ph[36][0] << " " << S_ph[36][1] << endl;
         cout << S_ph[37][0] << " " << S_ph[37][1] << endl;
-        cout << S_ph[38][0] << " " << S_ph[38][1] << endl << endl << endl;
+        cout << S_ph[38][0] << " " << S_ph[38][1] << endl;
+        cout << S_ph[39][0] << " " << S_ph[39][1] << endl << endl << endl;
     }
-    CalcSumVPhAndPoreV(max_h_t);
 }
 #pragma endregion

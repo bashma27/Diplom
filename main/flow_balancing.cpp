@@ -158,7 +158,7 @@ void GenFacesFlowValue() { // генерация граней со значением потока
                     _face_2_zp[3] = node_num[9]; _face_2_zp[4] = node_num[10]; _face_2_zp[5] = node_num[11];
                     _face_2_zp[6] = node_num[18]; _face_2_zp[7] = node_num[19]; _face_2_zp[8] = node_num[20];
                     int num_face_2_zp = GetNumFace2ZP(_face_2_zp);
-                    faces_flow_value.push_back(-SpecFlow(num_face_2_zp));
+                    faces_flow_value.push_back(-SpecFlow(num_face_2_zp));                  
                     num_faces_zp.push_back({ faces_flow_value.size() - 1 , 0 });
                     num_face_2_zp++;
                 }

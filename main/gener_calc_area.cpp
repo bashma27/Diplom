@@ -86,6 +86,13 @@ int InputSetFlowZonePerf() { // ввод заданных потоков на зонах перфорации
     for (int i = 0; i < NUM_ZONE_PERF; i++) {
         set_flow_zp.resize(NUM_ZONE_PERF);
         File >> set_flow_zp[i];
+        if (set_flow_zp[i] > EPS) {
+            vector<double> satur(num_ph);
+            for (int j = 0; j < num_ph; j++) {
+                File >> satur[j];
+            }
+            satur_pos_set_flow.push_back(satur);
+        }
         set_flow_zp[i] /= 86400.; // перевод из м^3/сутки в м^3/с
     }
     return 0;

@@ -30,11 +30,13 @@ int main()
     double eps = 1e-15;
     MSG::LU_sq_MSG(q, r, z, Az, Mult, NUM_NODES, eps, max_iter);
     GenArrayFictEndEl();
-    BalancingFlows();
-    RecalcCellState();
 
     /*GenFictNodes();
     Test();*/
+
+    BalancingFlows();
+    RecalcCellState();
+
 
     /*vector<double> vec_analit_P;
     VecAnalitP();*/

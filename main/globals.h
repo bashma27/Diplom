@@ -33,5 +33,4 @@ extern vector<int> el_for_face; // конечный элемент, соответствующий грани
 extern vector<vector<double>> satur; // значения насыщенностей для каждого элемента каждой фазы
 extern vector<vector<double>> max_t; // максимальные значения времени для перетоков каждого элемента каждой фазы 
 extern vector<double> max_t_mixture; // максимальные значения времени для смеси
-extern vector<double> pore_V; // поровый объем
-extern vector<double> sum_V_ph; // суммарный объем фаз
+extern vector<vector<double>> satur_pos_set_flow; // насыщенности каждой фазы для заданных зон перфорации, закачивающих жидкость 

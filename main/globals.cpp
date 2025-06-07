@@ -8,7 +8,7 @@ int NUM_SPLIT_X = 0, NUM_SPLIT_Y = 0, NUM_SPLIT_Z = 0;
 int NUM_NODES_IN_EDGE_X = 0, NUM_NODES_IN_EDGE_Y = 0, NUM_NODES_IN_EDGE_Z = 0, NUM_NODES = 0, NUM_END_EL = 0;
 int num_ph = 0;
 
-double EPS = 1e-300, F = 0;
+double EPS = 1e-15, F = 0;
 
 vector<vector<double>> G = {
     {7., -8., 1.},
@@ -45,5 +45,4 @@ vector<int> el_for_face;
 vector<vector<double>> satur;
 vector<vector<double>> max_t;
 vector<double> max_t_mixture;
-vector<double> pore_V;
-vector<double> sum_V_ph;
+vector<vector<double>> satur_pos_set_flow;

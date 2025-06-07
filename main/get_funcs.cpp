@@ -65,3 +65,13 @@ int GetNumFace2ZP(vector<int>& _face_2_zp) { // получить номер грани зоны перфор
         }
     }
 }
+
+int GetNumPosFlowFromAllSetFlows(int num_zone_perf) { // получить номер положительного потока из всех заданных потоков на зонах перфорации
+    int num = 0;
+    for (int i = 0; i < num_zone_perf; i++) {
+        if (set_flow_zp[i] > EPS) {
+            num++;
+        }   
+    }
+    return num;
+}

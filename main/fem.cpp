@@ -95,6 +95,7 @@ bool IsFindFictFace(int num_face) { // нахождение грани в массиве фиктивных гран
 #pragma region Задание/вычисление краевых условий, потока и правой части
 double u_g(double x, double y, double z) { // краевое условие первого рода
     return 130 * 101325.; // в Паскалях
+    //return x * y;
 }
 
 double k_ph(int num_el, int num_ph) { // множитель структурной проницаемости

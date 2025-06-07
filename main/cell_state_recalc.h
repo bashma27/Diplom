@@ -17,10 +17,6 @@ double MaxDeltaTMixture(); //максимальный шаг по времени дл€ смеси
 void CalcNewFlowAndSatur(double h_t); // расчитать новые потоки на элементах и значени€ насыщенностей
 #pragma endregion
 
-#pragma region ѕодсчет суммарного объема фаз и порового объема
-void CalcSumVPhAndPoreV(double max_h_t); // расчитать суммарный объем фаз и поровый объем
-#pragma endregion
-
 #pragma region ѕересчет состо€ни€ €чеек
 void RecalcCellState(); // пересчитать состо€ние €чеек
 #pragma endregion

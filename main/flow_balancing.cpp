@@ -99,7 +99,7 @@ void GenFacesFlowValue() { // генерация граней со значением потока
     // порядок заполнения: 
     // сначала грани по y, потом по x (слева - направо; от ближайшей до дальней (если смотреть в сечении xy то снизу вверх)), потом вверх по z
     // (потоки по верхней и нижней z известны и не нужна фактически, а внутренние потоки по z практически нулевые - можно не учитывать (скважина полностью проходит по глубине z))
-    faces_flow_ph_value.resize(num_ph);
+    faces_flow_value.clear();
     vector<int> node_num(27);
     bool left = true;
     bool face_y = true;
@@ -113,12 +113,14 @@ void GenFacesFlowValue() { // генерация граней со значением потока
         for (int j = 0; j < NUM_SPLIT_X; j++) {
             node_num = array_p[start_el + j].second;
             faces_flow_value.push_back(-CalcFlowFaceXZ(node_num, start_el + j, -1));
+            //faces_flow_value.push_back(0.);
         }
         //самая передняя грань по y
 
         //самая левая грань по x
         node_num = array_p[start_el].second;
         faces_flow_value.push_back(-CalcFlowFaceYZ(node_num, start_el, -1));
+        //faces_flow_value.push_back(0.);
         //самая левая грань по x
 
         //внутренние грани по x
@@ -140,6 +142,7 @@ void GenFacesFlowValue() { // генерация граней со значением потока
         //самая правая грань по x
         node_num = array_p[start_el + NUM_SPLIT_X - 1].second;
         faces_flow_value.push_back(CalcFlowFaceYZ(node_num, start_el + NUM_SPLIT_X - 1, 1));
+        //faces_flow_value.push_back(0.);
         //самая правая грань по x
 
         start_el += NUM_SPLIT_X;
@@ -196,6 +199,7 @@ void GenFacesFlowValue() { // генерация граней со значением потока
             //самая левая грань по x
             node_num = array_p[start_el].second;
             faces_flow_value.push_back(-CalcFlowFaceYZ(node_num, start_el, -1));
+            //faces_flow_value.push_back(0.);
             //самая левая грань по x
 
             //внутренние грани по x
@@ -245,6 +249,7 @@ void GenFacesFlowValue() { // генерация граней со значением потока
             //самая правая грань по x
             node_num = array_p[start_el + NUM_SPLIT_X - 1].second;
             faces_flow_value.push_back(CalcFlowFaceYZ(node_num, start_el + NUM_SPLIT_X - 1, 1));
+            //faces_flow_value.push_back(0.);
             //самая правая грань по x
 
             if (j == NUM_SPLIT_Y - 1) continue;
@@ -256,6 +261,7 @@ void GenFacesFlowValue() { // генерация граней со значением потока
         for (int j = 0; j < NUM_SPLIT_X; j++) {
             node_num = array_p[start_el + j].second;
             faces_flow_value.push_back(CalcFlowFaceXZ(node_num, start_el + j, 1));
+            //faces_flow_value.push_back(0.);
         }
         //самая дальняя грань по y
 
@@ -273,6 +279,7 @@ void ClearAndGenPortMatr() { // отчистить старое и создать новый портрет для мат
     b.clear();
     L_sq.clear();
     di_sq.clear();
+    list_face.clear();
     list_face.resize(faces_flow_value.size());
     bool face_y = true;
     int num_face_layer = faces_flow_value.size() / NUM_SPLIT_Z; // кол-во ребер в слое (в плоскости xy в одном разбиении по z)
@@ -578,6 +585,7 @@ double CalcSumNonBalance() { // рассчитать суммарный небаланс
                 S_g_4 = (faces_flow_value[start_face + k + 2 * NUM_SPLIT_X + 1] < 0) ? -1 : 1;
                 double a = S_g_1 * fabs(faces_flow_value[start_face + k]) + S_g_2 * fabs(faces_flow_value[start_face + k + NUM_SPLIT_X]) +
                     S_g_3 * fabs(faces_flow_value[start_face + k + NUM_SPLIT_X + 1]) + S_g_4 * fabs(faces_flow_value[start_face + k + 2 * NUM_SPLIT_X + 1]);
+                //res += a - CalcFlowF(array_p[curr_el].second, array_p[curr_el].first);
                 res += a;
                 curr_el++;
             }

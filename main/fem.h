@@ -3,6 +3,7 @@
 
 #pragma region Вспомогательные функции
 double BasicFunc(int i, double input_point, double point_1, double point_2, double point_3); // используемые базисные функции
+double LocalBasicFuncs(int i, double psi); // локальные базисные функции
 double DerivativeLocalBasicFuncs(int i, double psi); // производная по базисным функциям
 bool IsFictitious(int num); // определение фиктивности узла
 void GenFictNodes(); // генерация фиктивных узлов
@@ -10,6 +11,7 @@ void GenArrayFictEndEl(); // генерация массива фиктивных конечных элементов
 bool IsFictEl(int num_end_el); // определение фиктивности конечного элемента
 bool IsFindFaceZP(int num_face); // нахождение грани в массиве граней зон перфорации
 bool IsFindFictFace(int num_face); // нахождение грани в массиве фиктивных граней
+void Clean(); // отчистить матрицу и вектор
 #pragma endregion
 
 #pragma region Функции краевых условий, их функций и вектора правой части f
@@ -48,10 +50,6 @@ void CreateLocalVec(int num_sub, vector<int>& node_num); // локальный вектор пра
 
 #pragma region Построение глобальной матрицы и вектора
 void BuildMatrVec(); // построить глобальную матрицу и вектор
-#pragma endregion
-
-#pragma region Тестирование для аналитически заданных функций
-void Test(); // тест
 #pragma endregion
 
 #pragma region Возврат значения функции в любой точке

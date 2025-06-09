@@ -15,6 +15,7 @@ double MaxDeltaTMixture(); //максимальный шаг по времени для смеси
 
 #pragma region Расчет новых потоков и насыщенностей
 void CalcNewFlowAndSatur(double h_t); // расчитать новые потоки на элементах и значения насыщенностей
+vector<double> CalcExtraction(double h_t); // рассчитать отбор каждой фазы
 #pragma endregion
 
 #pragma region Пересчет состояния ячеек

@@ -2,7 +2,6 @@
 
 int Nx, Ny, Nz, L; // Nx - число границ по x, Ny - число границ по y, Nz - число границ по z, L - кол-во подобластей
 vector<double> Xw, Yw, Zw; // границы области
-vector<vector<pair<int, double>>> coef; // Коэффициеты n, q  для каждой области в виде пары
 
 int InputBorders() { // ввод координат границ подобластей
     ifstream File("grid_coord.txt");

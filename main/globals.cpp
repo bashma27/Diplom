@@ -46,3 +46,5 @@ vector<vector<double>> satur;
 vector<vector<double>> max_t;
 vector<double> max_t_mixture;
 vector<vector<double>> satur_pos_set_flow;
+vector<vector<pair<int, double>>> coef;
+double theta_;

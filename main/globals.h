@@ -34,3 +34,5 @@ extern vector<vector<double>> satur; // значения насыщенностей для каждого элеме
 extern vector<vector<double>> max_t; // максимальные значения времени для перетоков каждого элемента каждой фазы 
 extern vector<double> max_t_mixture; // максимальные значения времени для смеси
 extern vector<vector<double>> satur_pos_set_flow; // насыщенности каждой фазы для заданных зон перфорации, закачивающих жидкость 
+extern vector<vector<pair<int, double>>> coef; // Коэффициеты n, q  для каждой области в виде пары
+extern double theta_;

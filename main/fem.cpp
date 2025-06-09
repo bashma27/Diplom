@@ -1,5 +1,6 @@
 #include "fem.h"
 #include "get_funcs.h"
+#include <functional>
 
 #pragma region Вспомогательные функции
 double BasicFunc(int i, double input_point, double point_1, double point_2, double point_3) { // используемые базисные функции
@@ -14,6 +15,21 @@ double BasicFunc(int i, double input_point, double point_1, double point_2, doub
         break;
     case 2:
         return 2 * (input_point - point_1) * (input_point - point_2) / (h * h);
+        break;
+    }
+}
+
+double LocalBasicFuncs(int i, double psi) { // локальные базисные функции
+    switch (i)
+    {
+    case 0:
+        return 2 * (psi - 0.5) * (psi - 1.);
+        break;
+    case 1:
+        return -4 * psi * (psi - 1.);
+        break;
+    case 2:
+        return 2 * psi * (psi - 0.5);
         break;
     }
 }
@@ -90,12 +106,21 @@ bool IsFindFictFace(int num_face) { // нахождение грани в массиве фиктивных гран
     }
     return false;
 }
+
+void Clean() { // отчистить матрицу и вектор
+    ia.clear();
+    ja.clear();
+    aal.clear();
+    di.clear();
+    b.clear();
+    L_sq.clear();
+    di_sq.clear();
+}
 #pragma endregion
 
 #pragma region Задание/вычисление краевых условий, потока и правой части
 double u_g(double x, double y, double z) { // краевое условие первого рода
     return 130 * 101325.; // в Паскалях
-    //return x * y;
 }
 
 double k_ph(int num_el, int num_ph) { // множитель структурной проницаемости
@@ -518,6 +543,7 @@ void ConsiderBoundConditFirstType(int n, vector<vector<pair<int, int>>>& columnT
 void ConsiderBoundConditSecType(int num_face_2_zp) { // учет краевых условий второго типа
     vector<double> b_s2(9, 0);
     double _theta = theta(num_face_2_zp);
+    theta_ = _theta;
     double h_1, h_2;
     if (face_2_zp[num_face_2_zp].first == 0 || face_2_zp[num_face_2_zp].first == 1) {
         h_1 = nodes[face_2_zp[num_face_2_zp].second[2]].x - nodes[face_2_zp[num_face_2_zp].second[0]].x;
@@ -623,24 +649,6 @@ void BuildMatrVec() { // построить глобальную матрицу и вектор
 }
 #pragma endregion
 
-#pragma region Тестирование для аналитически заданных функций
-void Test() { // тест
-    vector<double> q_u(NUM_NODES, 0);
-    for (int i = 0; i < NUM_NODES; i++) {
-        q_u[i] = u_g(nodes[i].x, nodes[i].y, nodes[i].z);
-    }
-    double norm_vec_err = 0, norm_vec_q_u = 0; // норма вектора погрешности и q_u
-    for (int i = 0; i < NUM_NODES; i++) {
-        if (IsFictitious(i)) continue;
-        norm_vec_err += (q[i] - q_u[i]) * (q[i] - q_u[i]);
-        norm_vec_q_u += (q_u[i]) * (q_u[i]);
-    }
-    cout << endl;
-    cout << "Относительная норма вектора погрешности полученного решения:" << endl;
-    cout << sqrt(norm_vec_err) / sqrt(norm_vec_q_u) << endl << endl;
-} 
-#pragma endregion
-
 #pragma region Возврат значения функции в любой точке
 double GetResUInPoint(Coord3 point) { // получить значение полученной функции в точке
     int num_end_el = GetNumEndEl(point);
@@ -683,41 +691,4 @@ void OutputResult() { // вывод результата в файл
     }
     f_result.close();
 }
-#pragma endregion
-
-#pragma region Сравнение с аналитическим решением
-//double AnalitP(double r) {
-//    double res = _theta * r_w / lambda(0) * log(R / r) + P_g;
-//
-//    return res;
-//}
-//
-//void VecAnalitP() {
-//    double h_r;
-//    double curr_r = 1;
-//    double norm_true = 0, norm_err = 0;
-//    int i = 23;
-//    //int i = 45;
-//    while (curr_r < R) {
-//        h_r = nodes[i].x - nodes[i - 1].x;
-//        double analyt_value_P = AnalitP(curr_r);
-//        Coord3 p(curr_r, 0, 0.5);
-//        double num_value_P = ResUInPoint(p); // !!! т.к. аналитическое тоже в паскалях, лучше перевести давление в атмосферы исключительно на выдачу
-//        cout << curr_r << '\t' << num_value_P / 101325. << '\t' << analyt_value_P / 101325. << endl;
-//        norm_err += (analyt_value_P - num_value_P) * (analyt_value_P - num_value_P);
-//        norm_true += num_value_P * num_value_P;
-//        curr_r += h_r;
-//        i++;
-//    }
-//    curr_r = R;
-//    double analyt_value_P = AnalitP(curr_r);
-//    Coord3 p(curr_r, 0, 0.5);
-//    double num_value_P = ResUInPoint(p); // т.к. аналитическое тоже в паскалях, лучше перевести давление в атмосферы исключительно на выдачу
-//    cout << curr_r << '\t' << num_value_P / 101325. << '\t' << analyt_value_P / 101325. << endl;
-//    norm_err += (analyt_value_P - num_value_P) * (analyt_value_P - num_value_P);
-//    norm_true += num_value_P * num_value_P;
-//
-//    cout << endl << "Относительная норма вектора погрешности для аналитического решения:" << endl;
-//    cout << sqrt(norm_err) / sqrt(norm_true) << endl << endl; // !!! тут проcто опечатка, нормировка не на то была
-//}
 #pragma endregion

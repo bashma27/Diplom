@@ -139,6 +139,7 @@
     <ClCompile Include="globals.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="solver_slae.cpp" />
+    <ClCompile Include="test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cell_state_recalc.h" />
@@ -148,6 +149,7 @@
     <ClInclude Include="get_funcs.h" />
     <ClInclude Include="globals.h" />
     <ClInclude Include="solver_slae.h" />
+    <ClInclude Include="test.h" />
     <ClInclude Include="types.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -1,5 +1,6 @@
 #include "cell_state_recalc.h"
 #include "flow_balancing.h"
+#include "solver_slae.h"
 
 #pragma region Расчет потоков для каждой фазы
 void CalcFlowPh() { // расчитать потоки для каждоый фазы в отдельности
@@ -43,7 +44,7 @@ void CalcFlowPh() { // расчитать потоки для каждоый фазы в отдельности
 
         //внутренние грани по x
         for (int j = 0; j < NUM_SPLIT_X - 1; j++) {
-            int S_g = (faces_flow_value[num_flow] < 0) ? -1 : 1;
+            int S_g = (faces_flow_value[num_flow] < -EPS) ? -1 : 1;
             int curr_el;
             if (S_g < 0)
                 curr_el = start_el + j + 1;                           
@@ -143,7 +144,7 @@ void CalcFlowPh() { // расчитать потоки для каждоый фазы в отдельности
                     num_flow++;
                 }
                 else {
-                    int S_g = (faces_flow_value[num_flow] < 0) ? -1 : 1;
+                    int S_g = (faces_flow_value[num_flow] < -EPS) ? -1 : 1;
                     int curr_el;
                     if (S_g < 0)
                         curr_el = start_el + k;
@@ -237,7 +238,7 @@ void CalcFlowPh() { // расчитать потоки для каждоый фазы в отдельности
                     num_flow++;
                 }
                 else {
-                    int S_g = (faces_flow_value[num_flow] < 0) ? -1 : 1;
+                    int S_g = (faces_flow_value[num_flow] < -EPS) ? -1 : 1;
                     int curr_el;
                     if (S_g < 0)
                         curr_el = start_el + k + 1;
@@ -287,102 +288,6 @@ void CalcFlowPh() { // расчитать потоки для каждоый фазы в отдельности
         //самая дальняя грань по y
 
         start_el += NUM_SPLIT_X;
-    }
-}
-
-void RecalcFlowPh(double min_t) { // регулировка потоков для минимального шага по времени
-    for (int ph = 0; ph < num_ph; ph++) {
-        int start_face = 0;
-        int curr_el = 0;
-        double mes_el = 0;
-        double h_x, h_y, h_z;
-        for (int i = 0; i < NUM_SPLIT_Z; i++) {
-            for (int j = 0; j < NUM_SPLIT_Y; j++) {
-                for (int k = 0; k < NUM_SPLIT_X; k++) {
-
-                    if (IsFictEl(curr_el)) {
-                        curr_el++;
-                        continue;
-                    }
-
-                    if (max_t[curr_el][ph] < min_t) {                       
-                        double sum = 0;
-                        double nec_sum;
-                        int S_g_1, S_g_2, S_g_3, S_g_4;
-                        S_g_1 = (faces_flow_ph_value[start_face + k][ph] < 0) ? 1 : -1;
-                        S_g_2 = (faces_flow_ph_value[start_face + k + NUM_SPLIT_X][ph] < 0) ? 1 : -1;
-                        S_g_3 = (faces_flow_ph_value[start_face + k + NUM_SPLIT_X + 1][ph] < 0) ? -1 : 1;
-                        S_g_4 = (faces_flow_ph_value[start_face + k + 2 * NUM_SPLIT_X + 1][ph] < 0) ? -1 : 1;
-
-                        if (S_g_1 > 0)
-                            sum += fabs(faces_flow_ph_value[start_face + k][ph]);
-                        if (S_g_2 > 0)
-                            sum += fabs(faces_flow_ph_value[start_face + k + NUM_SPLIT_X][ph]);
-                        if (S_g_3 > 0)
-                            sum += fabs(faces_flow_ph_value[start_face + k + NUM_SPLIT_X + 1][ph]);
-                        if (S_g_4 > 0)
-                            sum += fabs(faces_flow_ph_value[start_face + k + 2 * NUM_SPLIT_X + 1][ph]);
-
-                        auto node_num = array_p[curr_el].second;
-
-                        h_x = nodes[node_num[2]].x - nodes[node_num[0]].x;
-                        h_y = nodes[node_num[6]].y - nodes[node_num[0]].y;
-                        h_z = nodes[node_num[18]].z - nodes[node_num[0]].z;
-
-                        int num_sub = array_p[curr_el].first;
-                        mes_el = h_x * h_y * h_z;
-
-                        nec_sum = mes_el * F * S_ph[curr_el][ph] / min_t;
-                        double diff_sum = fabs(nec_sum - sum);
-
-                        if (ph == 0) {
-                            if (S_g_1 > 0) {
-                                faces_flow_ph_value[start_face + k][0] -= diff_sum / 2.;
-                                faces_flow_ph_value[start_face + k][1] += diff_sum / 2.;
-                            }
-                            if (S_g_2 > 0) {
-                                faces_flow_ph_value[start_face + k + NUM_SPLIT_X][0] -= diff_sum / 2.;
-                                faces_flow_ph_value[start_face + k + NUM_SPLIT_X][1] += diff_sum / 2.;
-                            }
-                            if (S_g_3 > 0) {
-                                faces_flow_ph_value[start_face + k + NUM_SPLIT_X + 1][0] -= diff_sum / 2.;
-                                faces_flow_ph_value[start_face + k + NUM_SPLIT_X + 1][1] += diff_sum / 2.;
-                            }
-                            if (S_g_4 > 0) {
-                                faces_flow_ph_value[start_face + k + 2 * NUM_SPLIT_X + 1][0] -= diff_sum / 2.;
-                                faces_flow_ph_value[start_face + k + 2 * NUM_SPLIT_X + 1][1] += diff_sum / 2.;
-                            }
-                            max_t[curr_el][ph] = min_t;
-                        }
-                        else if (ph == 1) {
-                            if (S_g_1 > 0) {
-                                faces_flow_ph_value[start_face + k][0] += diff_sum / 2.;
-                                faces_flow_ph_value[start_face + k][1] -= diff_sum / 2.;
-                            }
-                            if (S_g_2 > 0) {
-                                faces_flow_ph_value[start_face + k + NUM_SPLIT_X][0] += diff_sum / 2.;
-                                faces_flow_ph_value[start_face + k + NUM_SPLIT_X][1] -= diff_sum / 2.;
-                            }
-                            if (S_g_3 > 0) {
-                                faces_flow_ph_value[start_face + k + NUM_SPLIT_X + 1][0] += diff_sum / 2.;
-                                faces_flow_ph_value[start_face + k + NUM_SPLIT_X + 1][1] -= diff_sum / 2.;
-                            }
-                            if (S_g_4 > 0) {
-                                faces_flow_ph_value[start_face + k + 2 * NUM_SPLIT_X + 1][0] += diff_sum / 2.;
-                                faces_flow_ph_value[start_face + k + 2 * NUM_SPLIT_X + 1][1] -= diff_sum / 2.;
-                            }
-                            max_t[curr_el][ph] = min_t;
-                        }
-                        else {
-                            cout << "Не работает для фаз больше 2" << endl;
-                        }                  
-                    }
-                    curr_el++;               
-                }
-                start_face += 2 * NUM_SPLIT_X + 1;
-            }
-            start_face += NUM_SPLIT_X;
-        }
     }
 }
 #pragma endregion
@@ -440,7 +345,6 @@ double MaxDeltaT() { //максимальный шаг по времени (учитывая каждую фазу, каждый
                         num = curr_el;
                     }
                        
-
                     curr_el++;
                 }
                 start_face += 2 * NUM_SPLIT_X + 1;
@@ -450,67 +354,10 @@ double MaxDeltaT() { //максимальный шаг по времени (учитывая каждую фазу, каждый
     }  
     return max_h_t;
 }
-
-double MaxDeltaTMixture() { //максимальный шаг по времени для смеси
-    max_t_mixture.resize(NUM_END_EL);
-    int start_face = 0;
-    int curr_el = 0;
-    double mes_el = 0;
-    double h_x, h_y, h_z;
-    double h_t = 0;
-    double max_h_t = 1e+200;
-    for (int i = 0; i < NUM_SPLIT_Z; i++) {
-        for (int j = 0; j < NUM_SPLIT_Y; j++) {
-            for (int k = 0; k < NUM_SPLIT_X; k++) {
-
-                if (IsFictEl(curr_el)) {
-                    curr_el++;
-                    continue;
-                }
-
-                double sum = 0;
-                int S_g_1, S_g_2, S_g_3, S_g_4;
-                S_g_1 = (faces_flow_value[start_face + k] < 0) ? 1 : -1;
-                S_g_2 = (faces_flow_value[start_face + k + NUM_SPLIT_X] < 0) ? 1 : -1;
-                S_g_3 = (faces_flow_value[start_face + k + NUM_SPLIT_X + 1] < 0) ? -1 : 1;
-                S_g_4 = (faces_flow_value[start_face + k + 2 * NUM_SPLIT_X + 1] < 0) ? -1 : 1;
-
-                if (S_g_1 > 0)
-                    sum += fabs(faces_flow_value[start_face + k]);
-                if (S_g_2 > 0)
-                    sum += fabs(faces_flow_value[start_face + k + NUM_SPLIT_X]);
-                if (S_g_3 > 0)
-                    sum += fabs(faces_flow_value[start_face + k + NUM_SPLIT_X + 1]);
-                if (S_g_4 > 0)
-                    sum += fabs(faces_flow_value[start_face + k + 2 * NUM_SPLIT_X + 1]);
-
-                auto node_num = array_p[curr_el].second;
-
-                h_x = nodes[node_num[2]].x - nodes[node_num[0]].x;
-                h_y = nodes[node_num[6]].y - nodes[node_num[0]].y;
-                h_z = nodes[node_num[18]].z - nodes[node_num[0]].z;
-
-                int num_sub = array_p[curr_el].first;
-                mes_el = h_x * h_y * h_z;
-
-                h_t = mes_el * F / sum;
-                max_t_mixture[curr_el] = h_t;
-
-                if (h_t < max_h_t)
-                    max_h_t = h_t;
-                curr_el++;
-            }
-            start_face += 2 * NUM_SPLIT_X + 1;
-        }
-        start_face += NUM_SPLIT_X;
-    }
-    return max_h_t;
-}
 #pragma endregion
 
 #pragma region Расчет новых потоков и насыщенностей
 void CalcNewFlowAndSatur(double h_t) { // расчитать новые потоки на элементах и значения насыщенностей
-    //satur.assign(NUM_SPLIT_Z * NUM_SPLIT_Y * NUM_SPLIT_X, vector<double>(num_ph, 0.0));
     int start_face = 0;
     int curr_el = 0;
     double mes_el = 0;
@@ -518,6 +365,9 @@ void CalcNewFlowAndSatur(double h_t) { // расчитать новые потоки на элементах и 
     for (int i = 0; i < NUM_SPLIT_Z; i++) {
         for (int j = 0; j < NUM_SPLIT_Y; j++) {
             for (int k = 0; k < NUM_SPLIT_X; k++) {
+
+                vector<double> V_ph(num_ph);
+                double sum_V_ph = 0.;
 
                 for (int ph = 0; ph < 2; ph++) {
                     if (IsFictEl(curr_el)) {
@@ -532,21 +382,23 @@ void CalcNewFlowAndSatur(double h_t) { // расчитать новые потоки на элементах и 
                     S_g_4 = (faces_flow_ph_value[start_face + k + 2 * NUM_SPLIT_X + 1][ph] < 0) ? -1 : 1;
 
                     if (S_g_1 > 0)
-                        sum -= fabs(faces_flow_ph_value[start_face + k][ph]) * h_t;
+                        V_ph[ph] -= fabs(faces_flow_ph_value[start_face + k][ph]) * h_t;
                     else
-                        sum += fabs(faces_flow_ph_value[start_face + k][ph]) * h_t;
+                        V_ph[ph] += fabs(faces_flow_ph_value[start_face + k][ph]) * h_t;
                     if (S_g_2 > 0)
-                        sum -= fabs(faces_flow_ph_value[start_face + k + NUM_SPLIT_X][ph]) * h_t;
+                        V_ph[ph] -= fabs(faces_flow_ph_value[start_face + k + NUM_SPLIT_X][ph]) * h_t;
                     else
-                        sum += fabs(faces_flow_ph_value[start_face + k + NUM_SPLIT_X][ph]) * h_t;
+                        V_ph[ph] += fabs(faces_flow_ph_value[start_face + k + NUM_SPLIT_X][ph]) * h_t;
                     if (S_g_3 > 0)
-                        sum -= fabs(faces_flow_ph_value[start_face + k + NUM_SPLIT_X + 1][ph]) * h_t;
+                        V_ph[ph] -= fabs(faces_flow_ph_value[start_face + k + NUM_SPLIT_X + 1][ph]) * h_t;
                     else
-                        sum += fabs(faces_flow_ph_value[start_face + k + NUM_SPLIT_X + 1][ph]) * h_t;
+                        V_ph[ph] += fabs(faces_flow_ph_value[start_face + k + NUM_SPLIT_X + 1][ph]) * h_t;
                     if (S_g_4 > 0)
-                        sum -= fabs(faces_flow_ph_value[start_face + k + 2 * NUM_SPLIT_X + 1][ph]) * h_t;
+                        V_ph[ph] -= fabs(faces_flow_ph_value[start_face + k + 2 * NUM_SPLIT_X + 1][ph]) * h_t;
                     else
-                        sum += fabs(faces_flow_ph_value[start_face + k + 2 * NUM_SPLIT_X + 1][ph]) * h_t;
+                        V_ph[ph] += fabs(faces_flow_ph_value[start_face + k + 2 * NUM_SPLIT_X + 1][ph]) * h_t;
+
+                    
 
                     auto node_num = array_p[curr_el].second;
 
@@ -557,19 +409,21 @@ void CalcNewFlowAndSatur(double h_t) { // расчитать новые потоки на элементах и 
                     int num_sub = array_p[curr_el].first;
                     mes_el = h_x * h_y * h_z;
 
-                    sum += mes_el * F * S_ph[curr_el][ph];
-
-                    S_ph[curr_el][ph] = sum / (mes_el * F);
-                    
+                    V_ph[ph] += mes_el * F * S_ph[curr_el][ph];
+                    if (V_ph[ph] < 0) {
+                        cout << "Ошибка!!!" << endl;
+                    }
+                    sum_V_ph += V_ph[ph];                
                 }
 
-                /*S_ph[curr_el][1] = 1 - S_ph[curr_el][0];
-                double sum_S = S_ph[curr_el][0] + S_ph[curr_el][1];*/
-                /*if (fabs(sum_S - 1.) > EPS) {
-                    S_ph[curr_el][0] /= sum_S;
-                    S_ph[curr_el][1] /= sum_S;
-                }*/
+                for (int ph = 0; ph < 2; ph++) {
 
+                    if (IsFictEl(curr_el)) {
+                        continue;
+                    }
+
+                    S_ph[curr_el][ph] = V_ph[ph] / sum_V_ph;
+                }
                 curr_el++;
             }
             start_face += 2 * NUM_SPLIT_X + 1;
@@ -704,26 +558,34 @@ vector<double> CalcExtraction(double h_t) { // рассчитать отбор каждой фазы
 #pragma region Пересчет состояния ячеек
 void RecalcCellState() { // пересчитать состояние ячеек
     CalcFlowPh();
-    double max_h_t = MaxDeltaTMixture();
-    double h_t = MaxDeltaT();
-    int n = 100;
-    double min_t = max_h_t / n;
-    RecalcFlowPh(max_h_t);
+    double total_time = 0.;
+    double time_to_recalc_P = 0.;
+    double curr_h_t = MaxDeltaT();
     double extr_oil = 0., extr_water = 0.;
-    for (int i = 1; i <= n; i++) {
-        CalcNewFlowAndSatur(i * min_t);
+
+    ofstream f1("extr_oil_neod.txt");
+    ofstream f2("perc_oil_neod.txt");
+    ofstream f3("time_neod.txt");
+    while (total_time < 50 * 86400.) {
+    
+        total_time += curr_h_t;
+        time_to_recalc_P += curr_h_t;
+        f3 << total_time / 86400. << endl;
+
+        CalcNewFlowAndSatur(curr_h_t);
         CalcFlowPh();
-        //auto extr = CalcExtraction(min_t);
-        //extr_oil += extr[0];
-        //extr_water += extr[1];
-        
-        //cout << extr_oil << " " << extr_water << endl << endl;
-        //cout << extr_oil  << endl;
-        /*cout << S_ph[34][0] << " " << S_ph[34][1] << " " << S_ph[34][0] + S_ph[34][1] << endl;
-        cout << S_ph[35][0] << " " << S_ph[35][1] << " " << S_ph[35][0] + S_ph[35][1] << endl;
-        cout << S_ph[36][0] << " " << S_ph[36][1] << " " << S_ph[36][0] + S_ph[36][1] << endl << endl;*/
-        cout << S_ph[7][0] << " " << S_ph[7][1] << " " << S_ph[7][0] + S_ph[7][1] << endl;
-        cout << S_ph[3][0] << " " << S_ph[3][1] << " " << S_ph[3][0] + S_ph[3][1] << endl << endl;
+
+        auto extr = CalcExtraction(curr_h_t);
+        extr_oil += extr[0];
+        f1 << extr_oil << endl;
+
+        extr_water += extr[1];
+        f2 << extr_oil / (extr_oil + extr_water) * 100. << endl;
+
+        curr_h_t = MaxDeltaT();
     }
+    f1.close();
+    f2.close();
+    f3.close();
 }
 #pragma endregion

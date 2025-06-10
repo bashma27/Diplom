@@ -8,19 +8,13 @@
 int main()
 {
     setlocale(LC_ALL, "Russian");
-    cout << "GenGrid" << endl;
     GenEndElGrid();
-    cout << "GenArrayParallelepipeds" << endl;
     GenArrayParallelepipeds();
-    cout << "GenPortraitMatr" << endl;
     GenPortraitMatr();
-    cout << "GenFirstBoundCondit" << endl;
     GenFirstBoundCondit();
-    cout << "GenSecBoundCondit" << endl;
     GenSecBoundCondit();
-    cout << "BuildMatrVec" << endl;
+    GenArrayFictEndEl();
     BuildMatrVec();
-    cout << "ConsiderBoundCondit" << endl;
     ConsiderBoundCondit();
     q.resize(NUM_NODES, 0);
     vector<double> r(NUM_NODES);
@@ -30,34 +24,14 @@ int main()
     int max_iter = 1000;
     double eps = 1e-15;
     MSG::LU_sq_MSG(q, r, z, Az, Mult, NUM_NODES, eps, max_iter);
-    GenArrayFictEndEl();
 
     GenFictNodes();
     //RelativeErrorNorm();
     //EnergyNorm();
     //VecAnalitP();
 
-    for (int t = 0; t < 30; t++) {
-        BalancingFlows();
-        RecalcCellState();
-        Clean();
-        GenPortraitMatr();
-        BuildMatrVec();
-        cout << "ConsiderBoundCondit" << endl;
-        ConsiderBoundCondit();
-        q.resize(NUM_NODES, 0);
-        vector<double> r(NUM_NODES);
-        vector<double> z(NUM_NODES);
-        vector<double> Mult(NUM_NODES);
-        vector<double> Az(NUM_NODES);
-        int max_iter = 1000;
-        double eps = 1e-15;
-        MSG::LU_sq_MSG(q, r, z, Az, Mult, NUM_NODES, eps, max_iter);
-    }
-
-
-    /*vector<double> vec_analit_P;
-    VecAnalitP();*/
+    //BalancingFlows();
+    //RecalcCellState();
 
     //OutputResult();
 }

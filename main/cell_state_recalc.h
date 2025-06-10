@@ -5,12 +5,10 @@
 
 #pragma region Расчет потоков для каждой фазы
 void CalcFlowPh(); // расчитать потоки для каждоый фазы в отдельности
-void RecalcFlowPh(double min_t); // регулировка потоков для минимального шага по времени
 #pragma endregion
 
 #pragma region Максимальынй шаг по времени
 double MaxDeltaT(); //максимальный шаг по времени (учитывая каждую фазу, каждый конечный элемент)
-double MaxDeltaTMixture(); //максимальный шаг по времени для смеси
 #pragma endregion
 
 #pragma region Расчет новых потоков и насыщенностей

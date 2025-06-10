@@ -113,14 +113,12 @@ void GenFacesFlowValue() { // генерация граней со значением потока
         for (int j = 0; j < NUM_SPLIT_X; j++) {
             node_num = array_p[start_el + j].second;
             faces_flow_value.push_back(-CalcFlowFaceXZ(node_num, start_el + j, -1));
-            //faces_flow_value.push_back(0.);
         }
         //самая передняя грань по y
 
         //самая левая грань по x
         node_num = array_p[start_el].second;
         faces_flow_value.push_back(-CalcFlowFaceYZ(node_num, start_el, -1));
-        //faces_flow_value.push_back(0.);
         //самая левая грань по x
 
         //внутренние грани по x
@@ -142,7 +140,6 @@ void GenFacesFlowValue() { // генерация граней со значением потока
         //самая правая грань по x
         node_num = array_p[start_el + NUM_SPLIT_X - 1].second;
         faces_flow_value.push_back(CalcFlowFaceYZ(node_num, start_el + NUM_SPLIT_X - 1, 1));
-        //faces_flow_value.push_back(0.);
         //самая правая грань по x
 
         start_el += NUM_SPLIT_X;
@@ -199,7 +196,6 @@ void GenFacesFlowValue() { // генерация граней со значением потока
             //самая левая грань по x
             node_num = array_p[start_el].second;
             faces_flow_value.push_back(-CalcFlowFaceYZ(node_num, start_el, -1));
-            //faces_flow_value.push_back(0.);
             //самая левая грань по x
 
             //внутренние грани по x
@@ -249,7 +245,6 @@ void GenFacesFlowValue() { // генерация граней со значением потока
             //самая правая грань по x
             node_num = array_p[start_el + NUM_SPLIT_X - 1].second;
             faces_flow_value.push_back(CalcFlowFaceYZ(node_num, start_el + NUM_SPLIT_X - 1, 1));
-            //faces_flow_value.push_back(0.);
             //самая правая грань по x
 
             if (j == NUM_SPLIT_Y - 1) continue;
@@ -261,7 +256,6 @@ void GenFacesFlowValue() { // генерация граней со значением потока
         for (int j = 0; j < NUM_SPLIT_X; j++) {
             node_num = array_p[start_el + j].second;
             faces_flow_value.push_back(CalcFlowFaceXZ(node_num, start_el + j, 1));
-            //faces_flow_value.push_back(0.);
         }
         //самая дальняя грань по y
 

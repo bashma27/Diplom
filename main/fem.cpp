@@ -51,11 +51,12 @@ double DerivativeLocalBasicFuncs(int i, double psi) { // производная по базисным
 
 bool IsFictitious(int num) { // определение фиктивности узла
     double x = nodes[num].x, y = nodes[num].y;
-    int x1, x2, y1, y2;
+    int x_min, x_max, y_min, y_max;
     for (int k = 0; k < NUM_ZONE_PERF; k++) {
-        x1 = zone_perf[k][0].x; y1 = zone_perf[k][0].y; //берём индексы координат прямоугольника
-        x2 = zone_perf[k][1].x; y2 = zone_perf[k][1].y;
-        if ((x1 - x) < EPS && x1 != x && EPS < (x2 - x) && x2 != x && (y1 - y) < EPS && y1 != y && EPS < (y2 - y) && y2 != y) // проверка на то что узел находится в прямоугольнике
+        x_min = zone_perf[k][0].x; y_min = zone_perf[k][0].y; //берём индексы координат прямоугольника
+        x_max = zone_perf[k][1].x; y_max = zone_perf[k][1].y;
+        if (x - x_min > EPS && EPS < x_max - x &&
+            y - y_min > EPS && EPS < y_max - y) // проверка на то что узел находится в прямоугольнике
             return true;
     }
     return false;
@@ -600,10 +601,8 @@ void CreateLocalMatrStiff(int num_el, vector<int>& node_num) { // локальная матр
     h_x = nodes[node_num[2]].x - nodes[node_num[0]].x;
     h_y = nodes[node_num[6]].y - nodes[node_num[0]].y;
     h_z = nodes[node_num[18]].z - nodes[node_num[0]].z;
-    vector<vector<double>> loc_matr_stiff(27);
-    for (int i = 0; i < 27; i++) {
-        loc_matr_stiff[i].resize(27);
-    }
+    vector<vector<double>> loc_matr_stiff;
+    loc_matr_stiff.assign(27, vector<double>(27));
     for (int i = 0; i < 27; i++) {
         for (int j = 0; j < 27; j++) {
             loc_matr_stiff[i][j] = lambda(num_el) *
@@ -633,18 +632,14 @@ void CreateLocalVec(int num_sub, vector<int>& node_num) { // локальный вектор пр
 
 #pragma region Построение глобальной матрицы и вектора
 void BuildMatrVec() { // построить глобальную матрицу и вектор
-    for (int i = 0; i < NUM_SPLIT_X * NUM_SPLIT_Y * NUM_SPLIT_Z; i++) {
+    for (int i = 0; i < NUM_END_EL; i++) {
 
-        auto result = find(begin(ident_fict), end(ident_fict), array_p[i].second[0]);
-        if (result != end(ident_fict)) i += i_ident_fict[result - begin(ident_fict)];
-
-        vector<int> node_num(27);
-        for (int j = 0; j < 27; j++) {
-            node_num[j] = array_p[i].second[j];
+        if (IsFictEl(i)) {
+            continue;
         }
-        int num_sub = array_p[i].first;
-        CreateLocalMatrStiff(i, node_num);
-        CreateLocalVec(num_sub, node_num);
+
+        CreateLocalMatrStiff(i, array_p[i].second);
+        CreateLocalVec(array_p[i].first, array_p[i].second);
     }
 }
 #pragma endregion
